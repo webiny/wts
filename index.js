@@ -24,7 +24,6 @@ class Tracking {
     // introduce a state for debug option
     window['w_ph_debug'] = [];
 
-    console.log (ph_instance);
     this.initializePosthogTracking (posthog => {
       // populate the user details
       this.gatherUserDetails (posthog);

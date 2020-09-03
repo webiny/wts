@@ -4,7 +4,6 @@ import Cookies from 'js-cookie';
 const PH_API = 'ZdDZgkeOt4Z_m-UWmqFsE1d6-kcCK3BH0ypYTUIFty4';
 const PH_HOST = 'https://t.webiny.com';
 const PH_COOKIE = 'ph_webiny';
-var ph_instance = null;
 
 class Tracking {
   constructor () {
@@ -36,9 +35,9 @@ class Tracking {
    * @param {*} callback 
    */
   initializePosthogTracking (callback) {
-    if (ph_instance !== null) {
-      callback (ph_instance);
-      return ph_instance;
+    if (window.posthog) {
+      callback (window.posthog);
+      return window.posthog;
     }
 
     posthog.init (PH_API, {
@@ -51,7 +50,7 @@ class Tracking {
           posthog.identify (userIp);
         }
 
-        ph_instance = posthog;
+        window.posthog = posthog;
         callback (posthog);
       },
     });

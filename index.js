@@ -7,8 +7,10 @@ const PH_COOKIE = 'ph_webiny';
 var ph_instance = null;
 
 class Tracking {
-  user = {};
-  debugFlag = false;
+  constructor () {
+    this.user = {};
+    this.debugFlag = false;
+  }
 
   /**
      * Activates Posthog tracking utility.

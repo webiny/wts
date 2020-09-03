@@ -1,0 +1,22 @@
+{
+  "name": "wts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webiny/wts.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/webiny/wts/issues"
+  },
+  "homepage": "https://github.com/webiny/wts#readme",
+  "dependencies": {
+    "js-cookie": "^2.2.1"
+  }
+}

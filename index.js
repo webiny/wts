@@ -333,11 +333,11 @@ class Tracking {
   }
 
   /**
-   * Tracks github clicks.
+   * Tracks action.
    */
-  trackGithubClick () {
+  trackAction (action) {
     this.initializePosthogTracking (posthog => {
-      posthog.capture ('gh-click');
+      posthog.capture (action);
     });
   }
 
@@ -354,8 +354,8 @@ export const activateTracking = () => {
   return t;
 };
 
-export const trackGithubClick = () => {
+export const trackAction = action => {
   const t = new Tracking ();
-  t.trackGithubClick ();
+  t.trackAction (action);
   return t;
 };

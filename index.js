@@ -189,7 +189,10 @@ class Tracking {
       let name = decodeURIComponent (pair[0]);
 
       if (name.indexOf ('utm_') !== -1) {
-        queryStrings[name] = decodeURIComponent (pair[1]);
+        // some cleanup stupp
+        name = name.replace (/amp;|;/gi, '');
+        const value = decodeURIComponent (pair[1]).replace (/amp;|;/gi, '');
+        queryStrings[name] = value;
       }
     }
 
@@ -247,7 +250,10 @@ class Tracking {
     }
 
     // linkedin
-    if (referrer.indexOf ('linkedin.com') !== -1) {
+    if (
+      referrer.indexOf ('linkedin.com') !== -1 ||
+      referrer.indexOf ('lnkd.in') !== -1
+    ) {
       network = 'linkedin';
     }
 
@@ -267,6 +273,7 @@ class Tracking {
     }
 
     // google search (has to be before the google ad service)
+    // note: don't add TLD
     if (referrer.indexOf ('google') !== -1) {
       network = 'google-search';
     }
@@ -306,9 +313,22 @@ class Tracking {
       network = 'npm';
     }
 
+    // webiny blog
+    if (referrer.indexOf ('blog.webiny.com') !== -1) {
+      network = 'webiny-blog';
+    }
+
+    // youtube
+    if (
+      referrer.indexOf ('youtube.com') !== -1 ||
+      referrer.indexOf ('youtu.be') !== -1
+    ) {
+      network = 'youtube';
+    }
+
     return {
       source: network, // network is null if we haven't matched it
-      domain: referrer,
+      domain: referrer.replace (/https:\/\/|http\/\/|\//gi, ''),
     };
   }
 

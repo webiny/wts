@@ -335,9 +335,9 @@ class Tracking {
   /**
    * Tracks action.
    */
-  trackAction (action) {
+  trackAction (action, props) {
     this.initializePosthogTracking (posthog => {
-      posthog.capture (action);
+      posthog.capture (action, props);
     });
   }
 
@@ -354,8 +354,8 @@ export const activateTracking = () => {
   return t;
 };
 
-export const trackAction = action => {
+export const trackAction = (action, props) => {
   const t = new Tracking ();
-  t.trackAction (action);
+  t.trackAction (action, props);
   return t;
 };

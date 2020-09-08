@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/webiny/wts#readme",
   "dependencies": {
-    "js-cookie": "^2.2.1"
+    "js-cookie": "^2.2.1",
+    "posthog-js": "^1.4.5"
   }
 }

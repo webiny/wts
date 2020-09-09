@@ -227,8 +227,8 @@ class Tracking {
 
     // before doing any analysis of the referrer, let's check if ref is another internal page
     if (
-      referrer === 'https://www.webiny.com/' ||
-      referrer === 'https://docs.webiny.com/' ||
+      referrer.indexOf ('https://www.webiny.com') === 0 ||
+      referrer.indexOf ('https://docs.webiny.com') === 0 ||
       referrer.indexOf ('localhost') !== -1
     ) {
       return null;

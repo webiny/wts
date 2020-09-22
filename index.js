@@ -123,6 +123,7 @@ class Tracking {
     // first load the current user
     this.user = this.getUserFromCookie ();
     const data = {};
+    const dataOnce = {};
     let firstTouchSet = false;
 
     // parse the UTM
@@ -135,15 +136,27 @@ class Tracking {
 
       if (!this.user.hasOwnProperty ('first-touch')) {
         for (const tag in utm) {
-          data['first-touch-' + tag] = utm[tag];
+          dataOnce['first-touch-' + tag] = utm[tag];
         }
         firstTouchSet = true;
       }
     }
 
     // get the referrer data
-    const referrer = this.parseReferrerData ();
+    let referrer = this.parseReferrerData ();
     this.debug ('Referrer data:' + JSON.stringify (referrer));
+    if (referrer === null && utm !== null) {
+      this.debug ('Referrer is null, but UTM tags are available');
+      // in case the referrer is null, but we have the UTM tags, we should update the referrer value based on the UTM (this happens when it's a direct link c/p)
+      if (utm.hasOwnProperty ('utm_source')) {
+        referrer = {
+          source: utm['utm_source'].toLowerCase (),
+          domain: utm['utm_source'].toLowerCase () + '.com',
+        };
+      }
+    }
+
+    // populate the referrer data
     if (referrer !== null) {
       // for the referrers we always set the first touch and last touch data separately
       // last touch is updated on every new visit if a referrer can be parsed
@@ -155,8 +168,8 @@ class Tracking {
 
       // update first touch (only if one wasn't set previously)
       if (!this.user.hasOwnProperty ('first-touch')) {
-        data['first-touch-referral-source'] = referrer.source;
-        data['first-touch-referral-domain'] = referrer.domain;
+        dataOnce['first-touch-referral-source'] = referrer.source;
+        dataOnce['first-touch-referral-domain'] = referrer.domain;
         firstTouchSet = true;
       }
     }
@@ -167,7 +180,13 @@ class Tracking {
       posthog.people.set (data);
       this.debug ('PH data saved.');
       if (firstTouchSet) {
+        // waiting for a fix: https://github.com/PostHog/posthog-js/issues/85
+        //posthog.people.set_once (dataOnce);
+        posthog.people.set (dataOnce);
+
         this.user['first-touch'] = 1;
+        this.debug ('PH data once saved.');
+        this.debug (dataOnce);
       }
       this.saveUserCookie ();
     }
@@ -178,6 +197,7 @@ class Tracking {
    */
   parseUtmData () {
     if (!document.location.search || document.location.search == '') {
+      this.debug ('UTM data not available');
       return null;
     }
 

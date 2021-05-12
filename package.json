@@ -2,10 +2,9 @@
   "name": "wts",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "build": "rm -f dist/bundle.js && babel src -d dist",
-    "test": "yarn build && node src/test.js"
+    "test:web": "node __tests__/web.test.js",
+    "test:node": "node __tests__/node.test.js"
   },
   "repository": {
     "type": "git",
@@ -18,18 +17,10 @@
   },
   "homepage": "https://github.com/webiny/wts#readme",
   "dependencies": {
-    "cross-fetch": "^3.1.4",
+    "node-fetch": "^2.6.1",
     "js-cookie": "^2.2.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.11.6",
-    "@babel/core": "^7.5.5",
-    "@babel/plugin-transform-runtime": "^7.11.5",
-    "@babel/polyfill": "^7.11.5",
-    "@babel/preset-env": "^7.5.5",
-    "babel-loader": "^8.0.6",
-    "webpack": "^4.39.1",
-    "webpack-cli": "^3.3.6",
-    "webpack-dev-server": "^3.7.2"
+    "prettier": "^2.3.0"
   }
 }

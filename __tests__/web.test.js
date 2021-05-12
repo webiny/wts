@@ -1,5 +1,5 @@
 // Simulate browser; browsers will have `fetch` available.
-global.fetch = require("cross-fetch");
+global.fetch = require("node-fetch");
 
 const { WTS } = require("../src/web");
 

@@ -1,5 +1,5 @@
-const fetch = require("node-fetch");
-const btoa = require("btoa");
+"use strict";
+
 const { WTSCore } = require("./core");
 
 /**

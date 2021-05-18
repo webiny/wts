@@ -1,5 +1,6 @@
 // Simulate browser; browsers will have `fetch` available.
 global.fetch = require("node-fetch");
+global.btoa = require("btoa");
 
 const { WTS } = require("../src/web");
 
@@ -14,7 +15,8 @@ document = {
 };
 window = {
   location: {
-    hostname: "www.webiny.com"
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/blog/article"
   }
 };
 

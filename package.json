@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test:web": "node __tests__/web.test.js",
-    "test:node": "node __tests__/node.test.js"
+    "test:node": "node __tests__/node.test.js",
+    "test:admin": "node __tests__/admin.test.js"
   },
   "repository": {
     "type": "git",
@@ -17,8 +18,9 @@
   },
   "homepage": "https://github.com/webiny/wts#readme",
   "dependencies": {
-    "node-fetch": "^2.6.1",
-    "js-cookie": "^2.2.1"
+    "btoa": "^1.2.1",
+    "js-cookie": "^2.2.1",
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "prettier": "^2.3.0"

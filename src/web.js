@@ -1,11 +1,15 @@
 "use strict";
 
 const Cookies = require("js-cookie");
-const { WTSCore } = require("./core");
+const HEAP_APP_ID = "3652736775";
 
-class WTS extends WTSCore {
+class WTS {
   constructor(config = {}) {
-    super({ FETCH: fetch, ...config });
+    if (typeof window.heap !== "object") {
+      throw new Error("Heap must be loaded before you can use WTS.");
+    }
+
+    heap.load(HEAP_APP_ID);
   }
 
   /**
@@ -14,10 +18,8 @@ class WTS extends WTSCore {
    * an IP as detecting user's API is an external API call and can take some time.
    *
    * @param {String} userId - User ID.
-   * @param {Object} traits - List of user attributes.
-   * @param {Object} context - Additional context to the user profile.
    */
-  async identify(userId, traits, context) {
+  async identify(userId) {
     this._debug("called identify");
     // skip tracking for gatsby builds
     if (typeof document === `undefined`) {
@@ -35,15 +37,8 @@ class WTS extends WTSCore {
       traits = {};
     }
 
-    // build the user object
-    const user = {
-      userId: userId,
-      traits: traits,
-      context: context
-    };
-
-    this._apiCall("identify", user);
-    this.identified = true;
+    window.heap.identify("92.21.7.69");
+    this.identity = userId;
   }
 
   /**
@@ -58,7 +53,7 @@ class WTS extends WTSCore {
       return false;
     }
 
-    if (!this.identified) {
+    if (!this.identity) {
       throw new Error(
         "WTS: You need to identify the user before you can call the trackEvent method."
       );
@@ -69,10 +64,7 @@ class WTS extends WTSCore {
       properties = {};
     }
 
-    this._apiCall("event", {
-      event,
-      properties
-    });
+    window.heap.track(event, properties);
   }
 
   /**
@@ -80,13 +72,14 @@ class WTS extends WTSCore {
    *
    * @param {Object} properties - Additional properties to be assigned to the page view event.
    */
+  /*
   async trackPage(properties) {
     // skip tracking for gatsby builds
     if (typeof document === `undefined`) {
       return false;
     }
 
-    if (!this.identified) {
+    if (!this.identity) {
       throw new Error(
         "WTS: You need to identify the user before you can call the trackPage method."
       );
@@ -99,6 +92,8 @@ class WTS extends WTSCore {
 
     // append basic metadata
     properties.pageTitle = document.title;
+    properties.pageUrl = window.location.href;
+    properties.domainName = window.location.hostname;
 
     // get UTM data if available
     const utm = this._parseUtmData();
@@ -114,6 +109,7 @@ class WTS extends WTSCore {
 
     this.trackEvent("page-view", properties);
   }
+  */
 
   /**
    * Returns the user's IP address

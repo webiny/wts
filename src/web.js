@@ -36,7 +36,7 @@ class WTS {
       traits = {};
     }
 
-    window.heap.identify("92.21.7.69");
+    window.heap.identify(userId);
     this.identity = userId;
   }
 

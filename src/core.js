@@ -2,7 +2,6 @@ const defaultConfig = {
   FETCH: null,
   BTOA: null,
   WTS_TELEMETRY_API: "https://t.webiny.com/",
-  WTS_COOKIE: "wts_v2",
   WTS_DEBUG: false,
   WTS_VERSION: "2.0"
 };

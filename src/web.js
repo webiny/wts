@@ -2,6 +2,7 @@
 
 const Cookies = require("js-cookie");
 const HEAP_APP_ID = "3652736775";
+const WTS_COOKIE = "wts_v2";
 
 class WTS {
   constructor(config = {}) {

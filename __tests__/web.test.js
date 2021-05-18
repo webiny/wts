@@ -1,6 +1,14 @@
 // Simulate browser; browsers will have `fetch` available.
 global.fetch = require("node-fetch");
 global.btoa = require("btoa");
+// mocks
+window = {};
+const heap = {
+  load: (appId) => {},
+  identify: (userId) => {},
+  track: (event, properties) => {}
+};
+global.heap = heap;
 
 const { WTS } = require("../src/web");
 
@@ -14,6 +22,7 @@ document = {
   }
 };
 window = {
+  heap: heap,
   location: {
     hostname: "www.webiny.com",
     href: "https://www.webiny.com/blog/article"
@@ -23,8 +32,8 @@ window = {
 (async () => {
   const wts = new WTS();
 
-  await wts.identify("1.1.1.1", { t1: "test", t2: "test" }, { c1: "test" });
-  wts.trackPage();
+  await wts.identify("1.1.1.1");
+  wts.trackEvent("test-event");
 })().catch((err) => {
   console.error(err);
 });

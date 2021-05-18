@@ -31,11 +31,6 @@ class WTS {
       userId = await this._getUserIp();
     }
 
-    // parse user traits
-    if (typeof traits !== "object" || traits === null) {
-      traits = {};
-    }
-
     window.heap.identify(userId);
     this.identity = userId;
   }

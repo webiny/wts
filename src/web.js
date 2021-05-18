@@ -10,7 +10,7 @@ class WTS {
       throw new Error("Heap must be loaded before you can use WTS.");
     }
 
-    heap.load(HEAP_APP_ID);
+    heap.load(HEAP_APP_ID, config);
   }
 
   /**

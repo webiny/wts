@@ -20,7 +20,6 @@ class WTS {
    * @param {String} userId - User ID.
    */
   async identify(userId) {
-    this._debug("called identify");
     // skip tracking for gatsby builds
     if (typeof document === `undefined`) {
       return false;
@@ -30,7 +29,6 @@ class WTS {
     if (typeof userId === "undefined" || userId === false || userId === null) {
       userId = await this._getUserIp();
     }
-    this._debug("User id set to:" + userId);
 
     // parse user traits
     if (typeof traits !== "object" || traits === null) {
@@ -118,7 +116,6 @@ class WTS {
     // retrieve user IP from the cookie
     this.user = this.getUserFromCookie();
     if (this.user.hasOwnProperty("ip")) {
-      this._debug("User IP retrieved from the cookie.");
       return this.user.ip;
     }
 
@@ -137,12 +134,8 @@ class WTS {
       // save user into cookie
       this.saveUserCookie();
 
-      this._debug("User IP retrieved from the IP-API.");
-
       return this.user.ip;
     } catch (e) {
-      this._debug("Unable to retrieve the user IP.");
-      this._debug(e);
       return false;
     }
   }
@@ -180,7 +173,6 @@ class WTS {
    */
   _parseUtmData() {
     if (!document.location.search || document.location.search == "") {
-      this._debug("UTM data not available");
       return null;
     }
 

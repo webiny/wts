@@ -117,7 +117,7 @@ class WTS {
 
     // retrieve the user IP from the IP-API
     try {
-      const response = await fetch("https://api.ipify.org/?format=json", {
+      const response = await fetch("https://t.webiny.com/ip", {
         method: "GET",
         mode: "cors"
       });

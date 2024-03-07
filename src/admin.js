@@ -8,8 +8,8 @@ const { WTSCore } = require("./core");
 class WTS extends WTSCore {
   constructor(config = {}) {
     super({
-      FETCH: fetch,
-      BTOA: btoa,
+      FETCH: fetch.bind(window),
+      BTOA: btoa.bind(window),
       ...config
     });
   }

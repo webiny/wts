@@ -26,13 +26,13 @@ class WTSCore {
    * @param {String} event - Event name.
    * @param {Object} properties - Additional attributes assigned to the event.
    */
-  async trackEvent(userId, event, properties) {
+  trackEvent(userId, event, properties) {
     // ensure properties are an object
     if (typeof properties !== "object" || properties === null) {
       properties = {};
     }
 
-    this._apiCall("event", {
+    return this._apiCall("event", {
       event: event,
       identity: userId,
       properties: properties
@@ -60,14 +60,17 @@ class WTSCore {
       const body = "wts=true&data=" + encodeURIComponent(this.btoa(JSON.stringify(payload)));
       this._debug(body);
 
-      this.client(this.config.WTS_TELEMETRY_API, {
+      const apiCallPromise = this.client(this.config.WTS_TELEMETRY_API, {
         method: "POST",
         body: body,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
         }
       });
+
       this._debug("Api call issued");
+
+      return apiCallPromise;
     } catch (e) {
       this._debug(e);
       return false;

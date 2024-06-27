@@ -37,9 +37,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"wts@workspace:.":
+"wts-client@workspace:.":
   version: 0.0.0-use.local
-  resolution: "wts@workspace:."
+  resolution: "wts-client@workspace:."
   dependencies:
     btoa: ^1.2.1
     js-cookie: ^2.2.1

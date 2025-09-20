@@ -1,12 +1,15 @@
 {
   "name": "wts-client",
+  "type": "module",
   "version": "2.0.0",
   "description": "Webiny Telemetry Service (WTS) client library.",
   "scripts": {
     "build": "rm -rf dist && cp -rf src dist && cp package.json dist/package.json",
     "test:web": "node __tests__/web.test.js",
     "test:node": "node __tests__/node.test.js",
-    "test:admin": "node __tests__/admin.test.js"
+    "test:admin": "node __tests__/admin.test.js",
+    "lint": "prettier \"src/**/*.js\" \"__tests__/**/*.js\"",
+    "lint:fix": "prettier --write \"src/**/*.js\" \"__tests__/**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -20,11 +23,10 @@
   "homepage": "https://github.com/webiny/wts#readme",
   "dependencies": {
     "btoa": "^1.2.1",
-    "js-cookie": "^2.2.1",
-    "node-fetch": "^2.6.1"
+    "js-cookie": "^2.2.1"
   },
   "devDependencies": {
-    "prettier": "^2.3.0"
+    "prettier": "^2.8.8"
   },
   "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }

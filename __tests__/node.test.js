@@ -1,18 +1,18 @@
-const { WTS } = require("../src/node");
+import { WTS } from "../src/node.js";
 
 // mock some stuff
-document = {
+global.document = {
   title: "Webiny page title",
   referrer: "https://www.google.com",
   location: {
     search:
-      "?utm_source=Dev-to&utm_medium=webiny-docs&utm_campaign=webiny-cross-promotion-nov-09&utm_content=webiny-doc-quick-start-page&utm_term=W00364"
-  }
+      "?utm_source=Dev-to&utm_medium=webiny-docs&utm_campaign=webiny-cross-promotion-nov-09&utm_content=webiny-doc-quick-start-page&utm_term=W00364",
+  },
 };
-window = {
+global.window = {
   location: {
-    hostname: "www.webiny.com"
-  }
+    hostname: "www.webiny.com",
+  },
 };
 
 (async () => {

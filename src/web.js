@@ -1,10 +1,8 @@
-"use strict";
-
-const Cookies = require("js-cookie");
+import Cookies from "js-cookie";
 const HEAP_APP_ID = "3652736775";
 const WTS_COOKIE = "wts_v2";
 
-class WTS {
+export class WTS {
   constructor(config = {}) {
     if (typeof window.heap !== "object") {
       throw new Error("Heap must be loaded before you can use WTS.");
@@ -119,7 +117,7 @@ class WTS {
     try {
       const response = await fetch("https://t.webiny.com/ip", {
         method: "GET",
-        mode: "cors"
+        mode: "cors",
       });
 
       const userData = await response.json();
@@ -160,7 +158,7 @@ class WTS {
   saveUserCookie() {
     Cookies.set(WTS_COOKIE, JSON.stringify(this.user), {
       expires: 365,
-      domain: this._getDomainName()
+      domain: this._getDomainName(),
     });
   }
 
@@ -184,7 +182,8 @@ class WTS {
         name = name.replace(/amp;|;/gi, "");
         name = name.replace(/utm_/gi, "");
         const value = decodeURIComponent(pair[1]).replace(/amp;|;/gi, "");
-        queryStrings["utm" + name.charAt(0).toUpperCase() + name.slice(1)] = value;
+        queryStrings["utm" + name.charAt(0).toUpperCase() + name.slice(1)] =
+          value;
       }
     }
 
@@ -206,7 +205,12 @@ class WTS {
     const referrer = document.referrer;
 
     // https://github.com/segmentio/inbound
-    if (typeof referrer === "undefined" || referrer === null || !referrer || referrer === "") {
+    if (
+      typeof referrer === "undefined" ||
+      referrer === null ||
+      !referrer ||
+      referrer === ""
+    ) {
       return null;
     }
 
@@ -227,12 +231,18 @@ class WTS {
     }
 
     // twitter
-    if (referrer.indexOf("twitter.com") !== -1 || referrer.indexOf("t.co") !== -1) {
+    if (
+      referrer.indexOf("twitter.com") !== -1 ||
+      referrer.indexOf("t.co") !== -1
+    ) {
       network = "twitter";
     }
 
     // linkedin
-    if (referrer.indexOf("linkedin.com") !== -1 || referrer.indexOf("lnkd.in") !== -1) {
+    if (
+      referrer.indexOf("linkedin.com") !== -1 ||
+      referrer.indexOf("lnkd.in") !== -1
+    ) {
       network = "linkedin";
     }
 
@@ -298,15 +308,16 @@ class WTS {
     }
 
     // youtube
-    if (referrer.indexOf("youtube.com") !== -1 || referrer.indexOf("youtu.be") !== -1) {
+    if (
+      referrer.indexOf("youtube.com") !== -1 ||
+      referrer.indexOf("youtu.be") !== -1
+    ) {
       network = "youtube";
     }
 
     return {
       referrerSource: network, // network is null if we haven't matched it
-      referrerDomain: referrer.replace(/https:\/\/|http\/\/|\//gi, "")
+      referrerDomain: referrer.replace(/https:\/\/|http\/\/|\//gi, ""),
     };
   }
 }
-
-module.exports = { WTS };

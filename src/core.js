@@ -3,10 +3,10 @@ const defaultConfig = {
   BTOA: null,
   WTS_TELEMETRY_API: "https://t.webiny.com/",
   WTS_DEBUG: false,
-  WTS_VERSION: "2.0"
+  WTS_VERSION: "2.0",
 };
 
-class WTSCore {
+export class WTSCore {
   constructor(config) {
     this.config = Object.assign({}, defaultConfig, config);
     this.client = this.config.FETCH;
@@ -15,7 +15,9 @@ class WTSCore {
     this.identified = false;
 
     if (!this.client) {
-      throw Error(`Implementation class must provide a "fetch" client via config!`);
+      throw Error(
+        `Implementation class must provide a "fetch" client via config!`
+      );
     }
   }
 
@@ -35,7 +37,7 @@ class WTSCore {
     return this._apiCall("event", {
       event: event,
       identity: userId,
-      properties: properties
+      properties: properties,
     });
   }
 
@@ -51,21 +53,23 @@ class WTSCore {
       const payload = {
         wts_method: wts_method,
         wts_version: this.config.WTS_VERSION,
-        data: data
+        data: data,
       };
 
       this._debug("Api call: " + wts_method);
       this._debug(payload);
 
-      const body = "wts=true&data=" + encodeURIComponent(this.btoa(JSON.stringify(payload)));
+      const body =
+        "wts=true&data=" +
+        encodeURIComponent(this.btoa(JSON.stringify(payload)));
       this._debug(body);
 
       const apiCallPromise = this.client(this.config.WTS_TELEMETRY_API, {
         method: "POST",
         body: body,
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       });
 
       this._debug("Api call issued");
@@ -83,5 +87,3 @@ class WTSCore {
     }
   }
 }
-
-module.exports = { WTSCore };

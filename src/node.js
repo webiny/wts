@@ -1,18 +1,12 @@
-const fetch = require("node-fetch");
-const btoa = require("btoa");
-const { WTSCore } = require("./core");
+import btoa from "btoa";
+import { WTSCore } from "./core.js";
 
-/**
- * Use `node-fetch`, as we already use it in other Webiny packages, so it won't add to the bundle size.
- */
-class WTS extends WTSCore {
+export class WTS extends WTSCore {
   constructor(config = {}) {
     super({
       FETCH: fetch,
       BTOA: btoa,
-      ...config
+      ...config,
     });
   }
 }
-
-module.exports = { WTS };

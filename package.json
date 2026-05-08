@@ -3,6 +3,9 @@
   "type": "module",
   "version": "3.0.0",
   "description": "Webiny Telemetry Service (WTS) client library.",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     "./web": {
       "types": "./web.d.ts",

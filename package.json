@@ -1,15 +1,36 @@
 {
-  "name": "wts-client",
+  "name": "@webiny/wts-client",
   "type": "module",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Webiny Telemetry Service (WTS) client library.",
+  "exports": {
+    "./web": {
+      "types": "./web.d.ts",
+      "import": "./web.js"
+    },
+    "./node": {
+      "types": "./node.d.ts",
+      "import": "./node.js"
+    },
+    "./react": {
+      "types": "./react.d.ts",
+      "import": "./react.js"
+    }
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.js.map",
+    "**/*.d.ts.map"
+  ],
   "scripts": {
-    "build": "rm -rf dist && cp -rf src dist && cp package.json dist/package.json",
-    "test:web": "node __tests__/web.test.js",
-    "test:node": "node __tests__/node.test.js",
-    "test:admin": "node __tests__/admin.test.js",
-    "lint": "prettier \"src/**/*.js\" \"__tests__/**/*.js\"",
-    "lint:fix": "prettier --write \"src/**/*.js\" \"__tests__/**/*.js\""
+    "build": "rm -rf dist && tsc && cp package.json dist/package.json",
+    "test:web": "tsx --test __tests__/web.test.ts",
+    "test:node": "tsx --test __tests__/node.test.ts",
+    "test:react": "tsx --test __tests__/react.test.tsx",
+    "test": "tsx --test __tests__/web.test.ts __tests__/node.test.ts __tests__/react.test.tsx",
+    "lint": "prettier \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
+    "lint:fix": "prettier --write \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\""
   },
   "repository": {
     "type": "git",
@@ -21,12 +42,21 @@
     "url": "https://github.com/webiny/wts/issues"
   },
   "homepage": "https://github.com/webiny/wts#readme",
-  "dependencies": {
-    "btoa": "^1.2.1",
-    "js-cookie": "^2.2.1"
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "prettier": "^2.8.8"
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "prettier": "^2.8.8",
+    "react": "^18.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
   },
-  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
+  "packageManager": "yarn@4.5.0"
 }

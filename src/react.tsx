@@ -8,7 +8,7 @@ export interface TelemetryProviderProps extends WebClientConfig {
   children: ReactNode;
 }
 
-export function TelemetryProvider({ children, ...config }: TelemetryProviderProps) {
+export function TelemetryProvider({ children, ...config }: TelemetryProviderProps): ReactNode {
   const client = useMemo(
     () => new WTS(config),
     // Identity for the client is controlled by config.source/apiUrl/distinctId — recreate only if those change.

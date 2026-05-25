@@ -1,7 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { TelemetryClient, uuid, type Identity, type Transport } from "./core.js";
+import {
+  TelemetryClient,
+  uuid,
+  type Identity,
+  type Transport,
+} from "./core.js";
 import type { ClientConfig } from "./types.js";
 
 const CONFIG_DIR = ".webiny";
@@ -32,7 +37,10 @@ class NodeIdentity implements Identity {
     }
 
     const id = uuid();
-    this.writeConfig({ ...config, user: { ...((config?.user as object) ?? {}), id } });
+    this.writeConfig({
+      ...config,
+      user: { ...((config?.user as object) ?? {}), id },
+    });
     this.cached = id;
     return id;
   }

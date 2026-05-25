@@ -6,7 +6,11 @@ const cookieJar: { value: string } = { value: "" };
 const storage = new Map<string, string>();
 
 function defineGlobal(name: string, value: unknown) {
-  Object.defineProperty(globalThis, name, { value, writable: true, configurable: true });
+  Object.defineProperty(globalThis, name, {
+    value,
+    writable: true,
+    configurable: true,
+  });
 }
 
 defineGlobal("window", globalThis);
@@ -23,7 +27,9 @@ defineGlobal("document", {
   set cookie(v: string) {
     const [pair] = v.split(";");
     if (pair && pair.includes("=")) {
-      cookieJar.value = cookieJar.value ? `${cookieJar.value}; ${pair.trim()}` : pair.trim();
+      cookieJar.value = cookieJar.value
+        ? `${cookieJar.value}; ${pair.trim()}`
+        : pair.trim();
     }
   },
   referrer: "https://www.google.com/",

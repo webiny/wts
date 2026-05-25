@@ -1,9 +1,17 @@
-import type { AnyEvent, ClientConfig, EventProperties, EventSource } from "./types.js";
+import type {
+  AnyEvent,
+  ClientConfig,
+  EventProperties,
+  EventSource,
+} from "./types.js";
 
 export const DEFAULT_API_URL = "https://t.webiny.com";
 
 export function uuid(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -42,7 +50,11 @@ export class TelemetryClient {
     this.transport = transport;
   }
 
-  track(event: string, properties: EventProperties = {}, context: { url?: string; referrer?: string } = {}): void {
+  track(
+    event: string,
+    properties: EventProperties = {},
+    context: { url?: string; referrer?: string } = {}
+  ): void {
     if (this.identity.isOptedOut()) {
       this.debug("opted out, skipping track", event);
       return;

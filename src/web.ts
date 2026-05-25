@@ -1,4 +1,9 @@
-import { TelemetryClient, uuid, type Identity, type Transport } from "./core.js";
+import {
+  TelemetryClient,
+  uuid,
+  type Identity,
+  type Transport,
+} from "./core.js";
 import type { ClientConfig } from "./types.js";
 
 const COOKIE_NAME = "wts_did";
@@ -64,10 +69,14 @@ class BrowserIdentity implements Identity {
 
   private writeCookie(id: string): void {
     if (typeof document === "undefined") return;
-    const expires = new Date(Date.now() + COOKIE_DAYS * 86400_000).toUTCString();
+    const expires = new Date(
+      Date.now() + COOKIE_DAYS * 86400_000
+    ).toUTCString();
     const domainPart = this.cookieDomain ? `; domain=${this.cookieDomain}` : "";
     const securePart = location.protocol === "https:" ? "; Secure" : "";
-    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(id)}; expires=${expires}; path=/${domainPart}${securePart}; SameSite=Lax`;
+    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
+      id
+    )}; expires=${expires}; path=/${domainPart}${securePart}; SameSite=Lax`;
   }
 
   private persistToStorage(id: string): void {
@@ -92,7 +101,10 @@ class BrowserTransport implements Transport {
   }
 
   sendBeacon(url: string, body: string): boolean {
-    if (typeof navigator === "undefined" || typeof navigator.sendBeacon !== "function") {
+    if (
+      typeof navigator === "undefined" ||
+      typeof navigator.sendBeacon !== "function"
+    ) {
       return false;
     }
     try {
@@ -106,7 +118,11 @@ class BrowserTransport implements Transport {
 
 export class WTS extends TelemetryClient {
   constructor(config: WebClientConfig) {
-    super(config, new BrowserIdentity(config.cookieDomain, config.distinctId), new BrowserTransport());
+    super(
+      config,
+      new BrowserIdentity(config.cookieDomain, config.distinctId),
+      new BrowserTransport()
+    );
   }
 
   trackPageView(properties: Record<string, unknown> = {}): void {
@@ -125,7 +141,9 @@ export class WTS extends TelemetryClient {
 
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  const match = document.cookie.match(
+    new RegExp("(?:^|; )" + name + "=([^;]*)")
+  );
   return match && match[1] ? decodeURIComponent(match[1]) : null;
 }
 

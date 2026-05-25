@@ -1,6 +1,13 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -38,7 +45,10 @@ test("WTS node client generates a machine id at the configured path", () => {
 test("WTS node client preserves existing config fields when adding user.id", () => {
   rmSync(configPath, { force: true });
   mkdirSync(join(tmpDir, ".webiny"), { recursive: true });
-  writeFileSync(configPath, JSON.stringify({ telemetry: true, otherField: "preserved" }));
+  writeFileSync(
+    configPath,
+    JSON.stringify({ telemetry: true, otherField: "preserved" })
+  );
 
   const wts = new WTS({ source: "cli", configPath });
   wts.track("cli-test-event");
@@ -56,7 +66,11 @@ test("WTS node client reuses existing user.id from config", async () => {
   writeFileSync(configPath, JSON.stringify({ user: { id: existingId } }));
 
   capturedRequest = null;
-  const wts = new WTS({ source: "cli", configPath, apiUrl: "https://t.example.com" });
+  const wts = new WTS({
+    source: "cli",
+    configPath,
+    apiUrl: "https://t.example.com",
+  });
   wts.track("cli-test-event");
 
   await new Promise((r) => setTimeout(r, 10));
@@ -82,7 +96,11 @@ test("WTS node client posts JSON body to /event", async () => {
   rmSync(configPath, { force: true });
   capturedRequest = null;
 
-  const wts = new WTS({ source: "cli", configPath, apiUrl: "https://t.example.com" });
+  const wts = new WTS({
+    source: "cli",
+    configPath,
+    apiUrl: "https://t.example.com",
+  });
   wts.track("cli-create-webiny-project-start", { os: "darwin" });
 
   await new Promise((r) => setTimeout(r, 10));

@@ -415,14 +415,14 @@ As of 2026-05-09:
 
 ## 13. Quick reference
 
-| Thing | Where |
-|---|---|
-| Production telemetry endpoint | `https://t.webiny.com/event` (POST, text/plain JSON) |
-| Legacy v2 endpoint (cutover) | `https://t.webiny.com/` (POST, base64 form-urlencoded) |
-| IP lookup | `https://t.webiny.com/ip` (GET) |
-| PostHog | `https://eu.i.posthog.com`, capture key `phc_g2s4q7tkIo0gq6zhJjg9HBI2Roumym26ui4DuB17bfR` |
-| Client npm package | `@webiny/wts-client@^3` |
-| Server stack | CloudFormation `wts-server` in `us-east-1` |
-| Cookie domain | `.webiny.com` (90-day TTL) |
-| Project installation file | `<project-root>/webiny.installation.json` |
-| Machine config | `~/.webiny/config` (JSON, `user.id` field) |
+| Thing | Where                                                    |
+|---|----------------------------------------------------------|
+| Production telemetry endpoint | `https://t.webiny.com/event` (POST, text/plain JSON)     |
+| Legacy v2 endpoint (cutover) | `https://t.webiny.com/` (POST, base64 form-urlencoded)   |
+| IP lookup | `https://t.webiny.com/ip` (GET)                          |
+| PostHog | `https://eu.i.posthog.com`, capture key `phc_**********` |
+| Client npm package | `@webiny/wts-client@^3`                                  |
+| Server stack | CloudFormation `wts-server` in `us-east-1`               |
+| Cookie domain | `.webiny.com` (90-day TTL)                               |
+| Project installation file | `<project-root>/webiny.installation.json`                |
+| Machine config | `~/.webiny/config` (JSON, `user.id` field)               |

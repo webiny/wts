@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [v2, v3]
+  pull_request:
+    branches: [v2, v3]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Type-check
+        run: yarn tsc --noEmit
+
+      - name: Build
+        run: yarn build
+
+      - name: Test
+        run: yarn test

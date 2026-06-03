@@ -3,6 +3,7 @@ import { WTS } from "../src/web.js";
 
 // Set up DOM-ish globals before importing the web entrypoint.
 const cookieJar: { value: string } = { value: "" };
+let lastSetCookie = "";
 const storage = new Map<string, string>();
 
 function defineGlobal(name: string, value: unknown) {
@@ -25,6 +26,7 @@ defineGlobal("document", {
     return cookieJar.value;
   },
   set cookie(v: string) {
+    lastSetCookie = v;
     const [pair] = v.split(";");
     if (pair && pair.includes("=")) {
       cookieJar.value = cookieJar.value ? `${cookieJar.value}; ${pair.trim()}` : pair.trim();
@@ -51,6 +53,7 @@ let capturedRequest: ICapturedRequest | null = null;
 
 beforeEach(() => {
   cookieJar.value = "";
+  lastSetCookie = "";
   storage.clear();
   capturedRequest = null;
 });
@@ -196,4 +199,143 @@ test("WTS web client skips alias when opted out", async () => {
 
   await new Promise(r => setTimeout(r, 10));
   expect(capturedRequest).toBeNull();
+});
+
+test("WTS web client uses sendBeacon when navigator.sendBeacon is available", async () => {
+  let beaconUrl: string | null = null;
+  let beaconData: Blob | null = null;
+  defineGlobal("navigator", {
+    sendBeacon: (url: string, data: Blob) => {
+      beaconUrl = url;
+      beaconData = data;
+      return true;
+    }
+  });
+
+  const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
+  (wts as any).dispatch(
+    {
+      event: "beacon-test",
+      distinct_id: "id",
+      source: "site",
+      timestamp: new Date().toISOString()
+    },
+    { preferBeacon: true }
+  );
+
+  expect(beaconUrl).toBe("https://t.example.com/event");
+  expect(beaconData).toBeInstanceOf(Blob);
+  expect(capturedRequest).toBeNull();
+
+  defineGlobal("navigator", { sendBeacon: undefined });
+});
+
+test("WTS web client falls back to fetch when sendBeacon returns false", async () => {
+  defineGlobal("navigator", {
+    sendBeacon: () => false
+  });
+
+  const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
+  (wts as any).dispatch(
+    {
+      event: "beacon-fail",
+      distinct_id: "id",
+      source: "site",
+      timestamp: new Date().toISOString()
+    },
+    { preferBeacon: true }
+  );
+
+  await new Promise(r => setTimeout(r, 10));
+  expect(capturedRequest).not.toBeNull();
+  const body = JSON.parse(capturedRequest!.init.body as string);
+  expect(body.event).toBe("beacon-fail");
+
+  defineGlobal("navigator", { sendBeacon: undefined });
+});
+
+test("deriveApexDomain returns null for localhost", () => {
+  defineGlobal("location", {
+    hostname: "localhost",
+    href: "http://localhost:3000",
+    protocol: "http:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("domain=");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("deriveApexDomain returns null for IP address", () => {
+  defineGlobal("location", {
+    hostname: "192.168.1.1",
+    href: "http://192.168.1.1",
+    protocol: "http:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("domain=");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("deriveApexDomain returns null for single-part hostname", () => {
+  defineGlobal("location", { hostname: "intranet", href: "http://intranet", protocol: "http:" });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("domain=");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("deriveApexDomain extracts apex from multi-part hostname", () => {
+  defineGlobal("location", {
+    hostname: "app.staging.webiny.com",
+    href: "https://app.staging.webiny.com",
+    protocol: "https:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).toContain("domain=.webiny.com");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("cookie includes Secure flag on https", () => {
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).toContain("Secure");
+});
+
+test("cookie omits Secure flag on http", () => {
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "http://www.webiny.com",
+    protocol: "http:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("Secure");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
 });

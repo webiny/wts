@@ -15,8 +15,12 @@ const OPT_OUT_KEY = "WEBINY_TELEMETRY";
 const COOKIE_DAYS = 90;
 
 export interface SessionRecordingConfig {
-  /** PostHog public project API key (safe to expose in the browser bundle). */
-  posthogKey: string;
+  /**
+   * PostHog public project API key (safe to expose in the browser bundle).
+   * If omitted or empty (e.g. the env var wasn't set at build time), recording
+   * is skipped with a console warning — the rest of WTS keeps working.
+   */
+  posthogKey?: string;
   /** PostHog API host — typically a reverse-proxy domain (e.g. "https://s.webiny.com"). */
   apiHost: string;
   /** CSS selector for text that should be masked in recordings. Defaults to `[data-private]`. */
@@ -192,6 +196,15 @@ export class WTS extends TelemetryClient {
       this.debug("opted out, skipping session recording");
       return;
     }
+    const posthogKey = cfg.posthogKey;
+    if (!posthogKey) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[wts] session recording is configured but no PostHog key was provided — skipping. " +
+          "Set the posthogKey field (e.g. from NEXT_PUBLIC_POSTHOG_KEY) to enable replays."
+      );
+      return;
+    }
     const distinctId = this.identity.getDistinctId();
     if (!distinctId) {
       this.debug("no distinct_id available, skipping session recording");
@@ -201,7 +214,7 @@ export class WTS extends TelemetryClient {
 
     import("posthog-js")
       .then(({ default: posthog }) => {
-        posthog.init(cfg.posthogKey, {
+        posthog.init(posthogKey, {
           api_host: cfg.apiHost,
           // WTS owns event capture via wts-server. The PostHog browser SDK is
           // recording-only here; disable everything else so events don't

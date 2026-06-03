@@ -756,7 +756,7 @@ __metadata:
     tsx: "npm:^4.22.3"
     typescript: "npm:^6.0.3"
   peerDependencies:
-    posthog-js: ">=1.180.0"
+    posthog-js: ">=1.376.4"
     react: ">=18"
   peerDependenciesMeta:
     posthog-js:

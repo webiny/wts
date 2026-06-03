@@ -46,9 +46,13 @@
   },
   "homepage": "https://github.com/webiny/wts#readme",
   "peerDependencies": {
+    "posthog-js": ">=1.180.0",
     "react": ">=18"
   },
   "peerDependenciesMeta": {
+    "posthog-js": {
+      "optional": true
+    },
     "react": {
       "optional": true
     }
@@ -56,6 +60,7 @@
   "devDependencies": {
     "@types/node": "^24.12.4",
     "@types/react": "^18.3.29",
+    "posthog-js": "^1.180.0",
     "prettier": "^2.8.8",
     "react": "^18.3.1",
     "tsx": "^4.22.3",

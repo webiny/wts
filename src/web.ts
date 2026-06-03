@@ -11,6 +11,15 @@ const STORAGE_KEY = "wts_did";
 const OPT_OUT_KEY = "WEBINY_TELEMETRY";
 const COOKIE_DAYS = 90;
 
+export interface SessionRecordingConfig {
+  /** PostHog public project API key (safe to expose in the browser bundle). */
+  posthogKey: string;
+  /** PostHog API host — typically a reverse-proxy domain (e.g. "https://s.webiny.com"). */
+  apiHost: string;
+  /** CSS selector for text that should be masked in recordings. Defaults to `[data-private]`. */
+  maskTextSelector?: string;
+}
+
 export interface WebClientConfig extends ClientConfig {
   cookieDomain?: string;
   /**
@@ -19,6 +28,12 @@ export interface WebClientConfig extends ClientConfig {
    * persisted to localStorage so it survives page refreshes within the app.
    */
   distinctId?: string;
+  /**
+   * Opt-in PostHog browser-side session recording. When omitted, posthog-js is not
+   * loaded — consumers that don't enable recording pay zero bundle cost. Consumers
+   * that do enable it must install `posthog-js` (declared as an optional peer dep).
+   */
+  sessionRecording?: SessionRecordingConfig;
 }
 
 class BrowserIdentity implements Identity {
@@ -116,6 +131,8 @@ class BrowserTransport implements Transport {
   }
 }
 
+let sessionRecordingStarted = false;
+
 export class WTS extends TelemetryClient {
   constructor(config: WebClientConfig) {
     super(
@@ -123,6 +140,48 @@ export class WTS extends TelemetryClient {
       new BrowserIdentity(config.cookieDomain, config.distinctId),
       new BrowserTransport()
     );
+
+    if (config.sessionRecording) {
+      this.startSessionRecording(config.sessionRecording);
+    }
+  }
+
+  private startSessionRecording(cfg: SessionRecordingConfig): void {
+    if (typeof window === "undefined") return;
+    if (sessionRecordingStarted) return;
+    if (this.identity.isOptedOut()) {
+      this.debug("opted out, skipping session recording");
+      return;
+    }
+    const distinctId = this.identity.getDistinctId();
+    if (!distinctId) {
+      this.debug("no distinct_id available, skipping session recording");
+      return;
+    }
+    sessionRecordingStarted = true;
+
+    import("posthog-js")
+      .then(({ default: posthog }) => {
+        posthog.init(cfg.posthogKey, {
+          api_host: cfg.apiHost,
+          // WTS owns event capture via wts-server. The PostHog browser SDK is
+          // recording-only here; disable everything else so events don't
+          // bypass the relay and duplicate in PostHog.
+          capture_pageview: false,
+          capture_pageleave: false,
+          autocapture: false,
+          disable_session_recording: false,
+          bootstrap: { distinctID: distinctId },
+          session_recording: {
+            maskAllInputs: true,
+            maskTextSelector: cfg.maskTextSelector ?? "[data-private]",
+          },
+        });
+        this.debug("session recording started", distinctId);
+      })
+      .catch((err) => {
+        this.debug("session recording failed to load", err);
+      });
   }
 
   trackPageView(properties: Record<string, unknown> = {}): void {

@@ -87,6 +87,33 @@ WTS.getCookieId();         // static, reads .webiny.com cookie (web only)
 - Browser: `fetch` with `keepalive: true`, falls back to `navigator.sendBeacon` on `pagehide`
 - Node: plain `fetch` (Node 18+ global)
 
+### Session recording (optional, browser-only)
+
+The `web` (and therefore `react`) entrypoint can also start a PostHog browser-side session recording alongside WTS event capture. This is opt-in per consumer — the marketing site, docs site, and learn site enable it; the CNS admin app does not.
+
+```ts
+new WTS({
+  source: "site",
+  sessionRecording: {
+    posthogKey: process.env.NEXT_PUBLIC_POSTHOG_KEY!,
+    apiHost: "https://s.webiny.com",   // PostHog reverse-proxy domain
+    maskTextSelector: "[data-private]", // optional, defaults to this
+  },
+});
+```
+
+Behavior:
+
+- **Dynamic import.** `posthog-js` is loaded via `await import("posthog-js")` only when `sessionRecording` is configured. Admin (and any other consumer that omits the config) ships zero posthog-js bytes.
+- **Optional peer dependency.** `posthog-js` is declared as an optional peer in `package.json`. Consumers that enable recording must add it to their own `package.json`; consumers that don't are unaffected.
+- **Identity is the same `wts_did`.** `bootstrap.distinctID` is set to whatever `BrowserIdentity.getDistinctId()` returns, so recordings and WTS funnel events join on the same id in PostHog with no extra wiring.
+- **Recording-only.** `capture_pageview`, `capture_pageleave`, and `autocapture` are all forced off in the posthog-js init. Event capture stays exclusively on the wts-server relay; PostHog browser SDK contributes the replay and nothing else. Without this, page-view and click events would arrive at PostHog through two channels and double-count.
+- **Opt-out applies.** The same `localStorage.WEBINY_TELEMETRY=false` check that gates regular events also short-circuits the dynamic import — posthog-js never loads when the user has opted out.
+- **Input masking on by default.** Init passes `maskAllInputs: true` and the consumer-overridable `maskTextSelector` (default `[data-private]`). Mark any DOM that might contain user-typed content with `data-private` to keep recordings clean. Anonymous-only telemetry posture applies to replays too.
+- **Single-init guard.** A module-level flag prevents double init under React StrictMode or accidental multiple `WTS` instantiations.
+
+You must also enable session recording at the PostHog **project** level — the per-init `disable_session_recording: false` flag is necessary but not sufficient.
+
 ### Build & publish
 
 - Build: `yarn build` → emits `dist/` with type declarations + sourcemaps
@@ -170,6 +197,8 @@ Tests (22 across parsers, botFilter, handler routing): `yarn test`
 - Next.js app router (similar shape to marketing site)
 - `components/telemetry.tsx` wraps `<TelemetryProvider source="learn">`
 - Mounted in `app/layout.tsx`
+
+All three browser apps above also pass `sessionRecording: { posthogKey, apiHost }` to the `TelemetryProvider`, enabling PostHog session replay (see §4 → "Session recording"). The admin app below deliberately omits it.
 
 ### Webiny admin + CLI — `webiny-js` (subdir `webiny/` of `webiny-v6-website`)
 
@@ -333,6 +362,16 @@ Every event-emitting code path checks this flag before posting. The `/install/fi
 - Capture key: hardcoded in `wts-server/src/posthog.ts` as `POSTHOG_KEY` (this is a public capture key — designed to be exposed)
 - Events arrive via `POST /capture/` from the Lambda, with the real client IP forwarded via `X-Forwarded-For`
 
+### Session recording (browser SDK, separate path)
+
+Recording cannot ride the wts-server relay (PostHog's recording endpoints are streamed snapshot batches, not discrete events). When enabled, posthog-js connects directly from the browser to PostHog using:
+
+- A **reverse-proxy domain configured on PostHog's side** (e.g. `s.webiny.com`), so recording traffic still goes through a first-party Webiny domain and isn't blocked by adblockers.
+- A **public project API key** exposed via `NEXT_PUBLIC_POSTHOG_KEY` in the consumer's Next.js env. Same key for all three browser apps (site, docs, learn) → one PostHog project, recordings and events sit together.
+- `bootstrap.distinctID = wts_did` so recordings join to the same person as funnel events.
+
+Session recording must also be **enabled at the PostHog project level** for any recordings to actually capture — the per-init `disable_session_recording: false` flag only matters once the project allows it.
+
 ### Suggested funnel in PostHog UI
 
 ```
@@ -426,3 +465,5 @@ As of 2026-05-09:
 | Cookie domain | `.webiny.com` (90-day TTL)                               |
 | Project installation file | `<project-root>/webiny.installation.json`                |
 | Machine config | `~/.webiny/config` (JSON, `user.id` field)               |
+| Session recording host | PostHog reverse-proxy domain (e.g. `https://s.webiny.com`), site/docs/learn only |
+| Session recording dep | `posthog-js@^1.180.0` (optional peer; install only in apps that enable recording) |

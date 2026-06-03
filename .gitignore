@@ -6,6 +6,8 @@ dist
 # generated files
 .docusaurus
 .cache-loader
+# coverage
+coverage
 # misc
 .DS_Store
 .env.local

@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { WTS, type WebClientConfig } from "./web.js";
 import type { EventProperties } from "./types.js";
 
@@ -15,27 +8,14 @@ export interface TelemetryProviderProps extends WebClientConfig {
   children: ReactNode;
 }
 
-export function TelemetryProvider({
-  children,
-  ...config
-}: TelemetryProviderProps): ReactNode {
+export function TelemetryProvider({ children, ...config }: TelemetryProviderProps): ReactNode {
   const client = useMemo(
     () => new WTS(config),
     // Identity for the client is controlled by config.source/apiUrl/distinctId — recreate only if those change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      config.source,
-      config.apiUrl,
-      config.distinctId,
-      config.cookieDomain,
-      config.debug,
-    ]
+    [config.source, config.apiUrl, config.distinctId, config.cookieDomain, config.debug]
   );
-  return (
-    <TelemetryContext.Provider value={client}>
-      {children}
-    </TelemetryContext.Provider>
-  );
+  return <TelemetryContext.Provider value={client}>{children}</TelemetryContext.Provider>;
 }
 
 export function useTelemetry(): WTS {
@@ -73,8 +53,12 @@ export function useTrackPageView(
   const lastPath = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!path) return;
-    if (lastPath.current === path) return;
+    if (!path) {
+      return;
+    }
+    if (lastPath.current === path) {
+      return;
+    }
     lastPath.current = path;
     client.trackPageView(properties);
     // properties is intentionally not in deps — page-view fires on path change only.

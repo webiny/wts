@@ -1,12 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import {
-  TelemetryClient,
-  uuid,
-  type Identity,
-  type Transport,
-} from "./core.js";
+import { TelemetryClient, uuid, type Identity, type Transport } from "./core.js";
 import type { ClientConfig } from "./types.js";
 
 const CONFIG_DIR = ".webiny";
@@ -27,7 +22,9 @@ class NodeIdentity implements Identity {
   }
 
   getDistinctId(): string | null {
-    if (this.cached) return this.cached;
+    if (this.cached) {
+      return this.cached;
+    }
 
     const config = this.readConfig();
     const existingId = (config?.user as { id?: string } | undefined)?.id;
@@ -39,7 +36,7 @@ class NodeIdentity implements Identity {
     const id = uuid();
     this.writeConfig({
       ...config,
-      user: { ...((config?.user as object) ?? {}), id },
+      user: { ...((config?.user as object) ?? {}), id }
     });
     this.cached = id;
     return id;
@@ -50,7 +47,9 @@ class NodeIdentity implements Identity {
   }
 
   private readConfig(): Record<string, unknown> | null {
-    if (!existsSync(this.path)) return null;
+    if (!existsSync(this.path)) {
+      return null;
+    }
     try {
       const raw = readFileSync(this.path, "utf8");
       const parsed = JSON.parse(raw);
@@ -75,7 +74,7 @@ class NodeTransport implements Transport {
     await fetch(url, {
       method: "POST",
       body,
-      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      headers: { "Content-Type": "text/plain;charset=UTF-8" }
     });
   }
 }

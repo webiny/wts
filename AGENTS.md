@@ -27,16 +27,16 @@ src/
 
 ## Commands
 
-| Task | Command |
-|------|---------|
-| Type-check | `yarn tsc --noEmit` |
-| Build | `yarn build` |
-| Test all | `yarn test` |
-| Test web only | `yarn test:web` |
-| Test node only | `yarn test:node` |
-| Test react only | `yarn test:react` |
-| Lint check | `yarn lint` |
-| Lint fix | `yarn lint:fix` |
+| Task            | Command             |
+| --------------- | ------------------- |
+| Type-check      | `yarn tsc --noEmit` |
+| Build           | `yarn build`        |
+| Test all        | `yarn test`         |
+| Test web only   | `yarn test:web`     |
+| Test node only  | `yarn test:node`    |
+| Test react only | `yarn test:react`   |
+| Lint check      | `yarn lint`         |
+| Lint fix        | `yarn lint:fix`     |
 
 ## Testing
 

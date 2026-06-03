@@ -19,14 +19,14 @@ PostHog (`eu.i.posthog.com`) is the destination. Heap was retired during the v3 
 
 ## 2. Repositories
 
-| Repo | Purpose |
-|---|---|
-| [`webiny/wts`](https://github.com/webiny/wts) | The client library. Published to npm as `@webiny/wts-client`. ESM-only TypeScript. Three entrypoints: `web`, `react`, `node`. |
-| [`webiny/wts-server`](https://github.com/webiny/wts-server) | The proxy Lambda. Receives events at `t.webiny.com`, validates / parses them, forwards to PostHog. Private repo — not published. |
-| [`webiny/webiny-v6-website`](https://github.com/webiny/webiny-v6-website) (subdir `nextjs/`) | Marketing site (`www.webiny.com`). Uses `@webiny/wts-client/react`. Hosts the `/install/finish` retro-merge page. |
-| [`webiny/docs.webiny.com`](https://github.com/webiny/docs.webiny.com) | Docs / reference manual. Uses `@webiny/wts-client/react`. |
-| [`webiny/learn-webiny-course-app`](https://github.com/webiny/learn-webiny-course-app) | Course site. Uses `@webiny/wts-client/react`. |
-| [`webiny/webiny-js`](https://github.com/webiny/webiny-js) | The Webiny CMS monorepo. Houses `@webiny/telemetry` (internal wrapper around `@webiny/wts-client`), the CLI (`packages/cli-core`, `packages/create-webiny-project`), and the admin app (`packages/app-admin`). |
+| Repo                                                                                         | Purpose                                                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`webiny/wts`](https://github.com/webiny/wts)                                                | The client library. Published to npm as `@webiny/wts-client`. ESM-only TypeScript. Three entrypoints: `web`, `react`, `node`.                                                                                  |
+| [`webiny/wts-server`](https://github.com/webiny/wts-server)                                  | The proxy Lambda. Receives events at `t.webiny.com`, validates / parses them, forwards to PostHog. Private repo — not published.                                                                               |
+| [`webiny/webiny-v6-website`](https://github.com/webiny/webiny-v6-website) (subdir `nextjs/`) | Marketing site (`www.webiny.com`). Uses `@webiny/wts-client/react`. Hosts the `/install/finish` retro-merge page.                                                                                              |
+| [`webiny/docs.webiny.com`](https://github.com/webiny/docs.webiny.com)                        | Docs / reference manual. Uses `@webiny/wts-client/react`.                                                                                                                                                      |
+| [`webiny/learn-webiny-course-app`](https://github.com/webiny/learn-webiny-course-app)        | Course site. Uses `@webiny/wts-client/react`.                                                                                                                                                                  |
+| [`webiny/webiny-js`](https://github.com/webiny/webiny-js)                                    | The Webiny CMS monorepo. Houses `@webiny/telemetry` (internal wrapper around `@webiny/wts-client`), the CLI (`packages/cli-core`, `packages/create-webiny-project`), and the admin app (`packages/app-admin`). |
 
 Local layout (developer machine):
 
@@ -47,11 +47,11 @@ Local layout (developer machine):
 
 Three distinct identifiers, each scoped differently. Don't collapse them.
 
-| ID | Scope | Persistence | Used as |
-|---|---|---|---|
-| **`wts_did`** | Browser visitor on `*.webiny.com` | First-party cookie on `.webiny.com`, 90-day TTL, with localStorage fallback | PostHog `distinct_id` for marketing/docs/learn page-view events |
-| **`machine_id`** | Developer machine | UUID stored at `~/.webiny/config` (the existing `user.id` field). Stable across multiple Webiny projects on the same machine | PostHog `distinct_id` for CLI events. Also passed at admin build time as `REACT_APP_WEBINY_TELEMETRY_USER_ID` so admin events share the deployer's identity |
-| **`installation_id`** | One Webiny project | UUID generated at `npx create-webiny-project` time, written to `<project>/webiny.installation.json` (tracked in git, NOT under `.webiny/`) | Super-property on every CLI/admin event for that project. Lets PostHog group events per-install regardless of which machine produced them |
+| ID                    | Scope                             | Persistence                                                                                                                                | Used as                                                                                                                                                     |
+| --------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`wts_did`**         | Browser visitor on `*.webiny.com` | First-party cookie on `.webiny.com`, 90-day TTL, with localStorage fallback                                                                | PostHog `distinct_id` for marketing/docs/learn page-view events                                                                                             |
+| **`machine_id`**      | Developer machine                 | UUID stored at `~/.webiny/config` (the existing `user.id` field). Stable across multiple Webiny projects on the same machine               | PostHog `distinct_id` for CLI events. Also passed at admin build time as `REACT_APP_WEBINY_TELEMETRY_USER_ID` so admin events share the deployer's identity |
+| **`installation_id`** | One Webiny project                | UUID generated at `npx create-webiny-project` time, written to `<project>/webiny.installation.json` (tracked in git, NOT under `.webiny/`) | Super-property on every CLI/admin event for that project. Lets PostHog group events per-install regardless of which machine produced them                   |
 
 The `wts_did` cookie and the `machine_id` are joined retroactively via the **install/finish handoff** (section 7). Until that handoff fires, the website cohort is decoupled from the CLI/admin cohort.
 
@@ -64,11 +64,11 @@ Published as `@webiny/wts-client@^3` on npm.
 
 ### Entrypoints
 
-| Import | Use case |
-|---|---|
-| `@webiny/wts-client/web` | Browser. Cookie-based identity on `.webiny.com`, optional `distinctId` override (used by admin to inherit machine_id). |
+| Import                     | Use case                                                                                                                                                                   |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@webiny/wts-client/web`   | Browser. Cookie-based identity on `.webiny.com`, optional `distinctId` override (used by admin to inherit machine_id).                                                     |
 | `@webiny/wts-client/react` | React provider + hooks. Mounted in marketing/docs/learn root layouts. Auto-tracks page-view events on route change. Exposes `useTelemetry()` and `useTrackPageView(path)`. |
-| `@webiny/wts-client/node` | Node/CLI. Reads machine_id from `~/.webiny/config`. |
+| `@webiny/wts-client/node`  | Node/CLI. Reads machine_id from `~/.webiny/config`.                                                                                                                        |
 
 ### API surface (all entrypoints)
 
@@ -76,8 +76,8 @@ Published as `@webiny/wts-client@^3` on npm.
 const wts = new WTS({ source: "site" | "docs" | "learn" | "admin" | "cli" });
 
 wts.track("event-name", { ...properties });
-wts.alias(oldId, newId);  // emits $create_alias for retro-merge
-WTS.getCookieId();         // static, reads .webiny.com cookie (web only)
+wts.alias(oldId, newId); // emits $create_alias for retro-merge
+WTS.getCookieId(); // static, reads .webiny.com cookie (web only)
 ```
 
 ### Transport
@@ -96,9 +96,9 @@ new WTS({
   source: "site",
   sessionRecording: {
     posthogKey: process.env.NEXT_PUBLIC_POSTHOG_KEY!,
-    apiHost: "https://s.webiny.com",   // PostHog reverse-proxy domain
-    maskTextSelector: "[data-private]", // optional, defaults to this
-  },
+    apiHost: "https://s.webiny.com", // PostHog reverse-proxy domain
+    maskTextSelector: "[data-private]" // optional, defaults to this
+  }
 });
 ```
 
@@ -129,11 +129,11 @@ Source: [`webiny/wts-server`](https://github.com/webiny/wts-server), branch `v3`
 
 ### Endpoints
 
-| Method + path | Purpose |
-|---|---|
-| `POST /event` | The v3 client format. Body is text/plain JSON. Validated, forwarded to PostHog. |
-| `POST /` | **Legacy** wts-client v2 format (base64 form-urlencoded). Kept during cutover so older Webiny releases still hitting `t.webiny.com/` keep working. Will be removed once all consumers are on v3. |
-| `GET /ip` | Returns the client's IP. Used by the legacy v2 client. Safe to keep indefinitely. |
+| Method + path | Purpose                                                                                                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST /event` | The v3 client format. Body is text/plain JSON. Validated, forwarded to PostHog.                                                                                                                  |
+| `POST /`      | **Legacy** wts-client v2 format (base64 form-urlencoded). Kept during cutover so older Webiny releases still hitting `t.webiny.com/` keep working. Will be removed once all consumers are on v3. |
+| `GET /ip`     | Returns the client's IP. Used by the legacy v2 client. Safe to keep indefinitely.                                                                                                                |
 
 ### Pipeline
 
@@ -285,34 +285,34 @@ The redirect-through-webiny.com approach is **first-party** at every step (the u
 
 ### Browser events (auto, all marketing sites)
 
-| Event | Source | Fires when |
-|---|---|---|
+| Event       | Source                    | Fires when                          |
+| ----------- | ------------------------- | ----------------------------------- |
 | `page-view` | `site` / `docs` / `learn` | Every route change (Next.js router) |
 
 Properties: `url`, `referrer` (auto), `path` (the route), plus app-specific metadata if added.
 
 ### CLI events (`@webiny/telemetry/cli.js`)
 
-| Event | Fires when |
-|---|---|
-| `cli-create-webiny-project-start` | `npx create-webiny-project` begins |
-| `cli-create-webiny-project-end` | Scaffold completes |
-| `cli-project-deploy-start` | `webiny deploy` begins |
-| `cli-project-deploy-end` | Deploy succeeds |
-| `cli-project-deploy-error` | Deploy fails (with error message) |
-| `cli-project-deploy-error-graceful` | Deploy fails with a known/expected error |
-| `cli-pulumi-command-deploy-*` | Per-app pulumi deploys (start/end/error variants) |
-| `disable-telemetry` / `enable-telemetry` | User toggles telemetry |
+| Event                                    | Fires when                                        |
+| ---------------------------------------- | ------------------------------------------------- |
+| `cli-create-webiny-project-start`        | `npx create-webiny-project` begins                |
+| `cli-create-webiny-project-end`          | Scaffold completes                                |
+| `cli-project-deploy-start`               | `webiny deploy` begins                            |
+| `cli-project-deploy-end`                 | Deploy succeeds                                   |
+| `cli-project-deploy-error`               | Deploy fails (with error message)                 |
+| `cli-project-deploy-error-graceful`      | Deploy fails with a known/expected error          |
+| `cli-pulumi-command-deploy-*`            | Per-app pulumi deploys (start/end/error variants) |
+| `disable-telemetry` / `enable-telemetry` | User toggles telemetry                            |
 
 Super-properties on every CLI event: `version` (Webiny version), `ci` (yes/no), `newUser`, `installation_id` (when `webiny.installation.json` is present), `wcpOrgId` / `wcpProjectId` (when WCP env vars are set).
 
 ### Admin events (`@webiny/telemetry/react.js`)
 
-| Event | Fires when |
-|---|---|
-| `admin-app-start` | Admin app mounts (once per page load) |
+| Event                  | Fires when                                           |
+| ---------------------- | ---------------------------------------------------- |
+| `admin-app-start`      | Admin app mounts (once per page load)                |
 | `install-wizard-start` | System installer is shown (system not yet installed) |
-| `install-wizard-end` | System installer completes successfully |
+| `install-wizard-end`   | System installer completes successfully              |
 
 Properties on `install-wizard-end`: `referralSource` only. **Not** `projectName` or `organizationName` — those are deliberately stripped to maintain anonymous-only telemetry posture.
 
@@ -320,8 +320,8 @@ Super-properties on every admin event: `version`, `ci`, `newUser`, `project_id` 
 
 ### Special
 
-| Event | Source | Purpose |
-|---|---|---|
+| Event           | Source | Purpose                                                                                                                                                         |
+| --------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `$create_alias` | `site` | The retro-merge from the install/finish page. Server forwards it to PostHog as a `$create_alias` capture, merging `alias` (old id) into `distinct_id` (new id). |
 
 ---
@@ -346,11 +346,11 @@ Super-properties on every admin event: `version`, `ci`, `newUser`, `project_id` 
 
 ### Opting out
 
-| Context | Mechanism |
-|---|---|
-| CLI / Node | `WEBINY_TELEMETRY=false` env var, or `webiny telemetry disable` (writes to `~/.webiny/config`) |
-| Browser (marketing/docs/learn) | `localStorage.WEBINY_TELEMETRY=false` |
-| Admin | `REACT_APP_WEBINY_TELEMETRY=false` env var at build time |
+| Context                        | Mechanism                                                                                      |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| CLI / Node                     | `WEBINY_TELEMETRY=false` env var, or `webiny telemetry disable` (writes to `~/.webiny/config`) |
+| Browser (marketing/docs/learn) | `localStorage.WEBINY_TELEMETRY=false`                                                          |
+| Admin                          | `REACT_APP_WEBINY_TELEMETRY=false` env var at build time                                       |
 
 Every event-emitting code path checks this flag before posting. The `/install/finish` CTA also checks it — when telemetry is off, the CTA falls through to the local `finishInstallation()` and never navigates the user to webiny.com.
 
@@ -382,6 +382,7 @@ Session recording must also be **enabled at the PostHog project level** for any 
 ```
 
 Conversion window: 7-14 days. Segment by:
+
 - `source` (`site` / `docs` / `learn`) — which app drove conversion
 - `properties.referralSource` — what referral source self-reports best
 - `properties.installation_id` — for per-install drill-down once webiny-js v3 is released
@@ -443,27 +444,27 @@ gh workflow run release.yml --ref v3 --repo webiny/wts
 
 As of 2026-05-09:
 
-| Item | Status |
-|---|---|
-| Release `webiny-js` `feat/wts-v3` (admin CTA + installation_id + PII fix) | PR open, awaiting next `@webiny/*` release |
-| Build the conversion-window funnel in PostHog UI | Configuration only |
-| Convert "Where did you hear about Webiny?" to a fixed dropdown | Optional UX work, separate PR |
-| Decommission Heap dashboards or migrate to PostHog | The wts-server v3 deploy stopped sending to Heap; existing Heap data is still queryable until the account is closed |
+| Item                                                                      | Status                                                                                                              |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Release `webiny-js` `feat/wts-v3` (admin CTA + installation_id + PII fix) | PR open, awaiting next `@webiny/*` release                                                                          |
+| Build the conversion-window funnel in PostHog UI                          | Configuration only                                                                                                  |
+| Convert "Where did you hear about Webiny?" to a fixed dropdown            | Optional UX work, separate PR                                                                                       |
+| Decommission Heap dashboards or migrate to PostHog                        | The wts-server v3 deploy stopped sending to Heap; existing Heap data is still queryable until the account is closed |
 
 ---
 
 ## 13. Quick reference
 
-| Thing | Where                                                    |
-|---|----------------------------------------------------------|
-| Production telemetry endpoint | `https://t.webiny.com/event` (POST, text/plain JSON)     |
-| Legacy v2 endpoint (cutover) | `https://t.webiny.com/` (POST, base64 form-urlencoded)   |
-| IP lookup | `https://t.webiny.com/ip` (GET)                          |
-| PostHog | `https://eu.i.posthog.com`, capture key `phc_**********` |
-| Client npm package | `@webiny/wts-client@^3`                                  |
-| Server stack | CloudFormation `wts-server` in `us-east-1`               |
-| Cookie domain | `.webiny.com` (90-day TTL)                               |
-| Project installation file | `<project-root>/webiny.installation.json`                |
-| Machine config | `~/.webiny/config` (JSON, `user.id` field)               |
-| Session recording host | PostHog reverse-proxy domain (e.g. `https://s.webiny.com`), site/docs/learn only |
-| Session recording dep | `posthog-js@^1.180.0` (optional peer; install only in apps that enable recording) |
+| Thing                         | Where                                                                             |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| Production telemetry endpoint | `https://t.webiny.com/event` (POST, text/plain JSON)                              |
+| Legacy v2 endpoint (cutover)  | `https://t.webiny.com/` (POST, base64 form-urlencoded)                            |
+| IP lookup                     | `https://t.webiny.com/ip` (GET)                                                   |
+| PostHog                       | `https://eu.i.posthog.com`, capture key `phc_**********`                          |
+| Client npm package            | `@webiny/wts-client@^3`                                                           |
+| Server stack                  | CloudFormation `wts-server` in `us-east-1`                                        |
+| Cookie domain                 | `.webiny.com` (90-day TTL)                                                        |
+| Project installation file     | `<project-root>/webiny.installation.json`                                         |
+| Machine config                | `~/.webiny/config` (JSON, `user.id` field)                                        |
+| Session recording host        | PostHog reverse-proxy domain (e.g. `https://s.webiny.com`), site/docs/learn only  |
+| Session recording dep         | `posthog-js@^1.180.0` (optional peer; install only in apps that enable recording) |

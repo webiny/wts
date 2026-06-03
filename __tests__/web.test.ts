@@ -181,7 +181,7 @@ test("WTS web client logs send failure in debug mode", async () => {
     throw new Error("network down");
   };
 
-  const wts = new WTS({ source: "site", debug: true });
+  const wts = new WTS({ source: "site", debug: true, retries: 0 });
   wts.track("fail-test");
 
   await new Promise(r => setTimeout(r, 50));

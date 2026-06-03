@@ -11,6 +11,10 @@ const OPT_OUT_ENV = "WEBINY_TELEMETRY";
 export interface NodeClientConfig extends ClientConfig {
   /** Override the path to the Webiny config file. Defaults to ~/.webiny/config. */
   configPath?: string;
+  /** Number of retry attempts for transient HTTP errors. Defaults to 3. */
+  retries?: number;
+  /** Base delay in ms between retries (exponential backoff). Defaults to 200. */
+  retryDelay?: number;
 }
 
 class NodeIdentity implements Identity {
@@ -69,18 +73,70 @@ class NodeIdentity implements Identity {
   }
 }
 
+const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getRetryDelay(response: Response, attempt: number, baseDelay: number): number {
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("retry-after");
+    if (retryAfter) {
+      const seconds = Number(retryAfter);
+      if (!Number.isNaN(seconds)) {
+        return seconds * 1000;
+      }
+      const date = Date.parse(retryAfter);
+      if (!Number.isNaN(date)) {
+        return Math.max(0, date - Date.now());
+      }
+    }
+  }
+  return baseDelay * 2 ** attempt;
+}
+
 class NodeTransport implements Transport {
+  private retries: number;
+  private retryDelay: number;
+
+  constructor(retries: number, retryDelay: number) {
+    this.retries = retries;
+    this.retryDelay = retryDelay;
+  }
+
   async send(url: string, body: string): Promise<void> {
-    await fetch(url, {
-      method: "POST",
-      body,
-      headers: { "Content-Type": "text/plain;charset=UTF-8" }
-    });
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          body,
+          headers: { "Content-Type": "text/plain;charset=UTF-8" }
+        });
+
+        if (response.ok || !RETRYABLE_STATUS_CODES.has(response.status)) {
+          return;
+        }
+
+        if (attempt < this.retries) {
+          await sleep(getRetryDelay(response, attempt, this.retryDelay));
+        }
+      } catch {
+        if (attempt >= this.retries) {
+          return;
+        }
+        await sleep(this.retryDelay * 2 ** attempt);
+      }
+    }
   }
 }
 
 export class WTS extends TelemetryClient {
   constructor(config: NodeClientConfig) {
-    super(config, new NodeIdentity(config.configPath), new NodeTransport());
+    super(
+      config,
+      new NodeIdentity(config.configPath),
+      new NodeTransport(config.retries ?? 3, config.retryDelay ?? 200)
+    );
   }
 }

@@ -1,8 +1,9 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
+import { test, expect, beforeEach, vi } from "vitest";
+import { WTS } from "../src/web.js";
 
 // Set up DOM-ish globals before importing the web entrypoint.
 const cookieJar: { value: string } = { value: "" };
+let lastSetCookie = "";
 const storage = new Map<string, string>();
 
 function defineGlobal(name: string, value: unknown) {
@@ -25,6 +26,7 @@ defineGlobal("document", {
     return cookieJar.value;
   },
   set cookie(v: string) {
+    lastSetCookie = v;
     const [pair] = v.split(";");
     if (pair && pair.includes("=")) {
       cookieJar.value = cookieJar.value ? `${cookieJar.value}; ${pair.trim()}` : pair.trim();
@@ -49,107 +51,291 @@ let capturedRequest: ICapturedRequest | null = null;
   return new Response(null, { status: 200 });
 };
 
-const { WTS } = await import("../src/web.ts");
-
-test("WTS web client mints a UUID and writes it to cookie + localStorage", () => {
+beforeEach(() => {
   cookieJar.value = "";
+  lastSetCookie = "";
   storage.clear();
   capturedRequest = null;
+});
 
+test("WTS web client mints a UUID and writes it to cookie + localStorage", () => {
   const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
   wts.track("test-event", { foo: "bar" });
 
-  assert.ok(cookieJar.value.includes("wts_did="), "cookie wts_did is set");
-  assert.ok(storage.has("wts_did"), "localStorage wts_did is set");
+  expect(cookieJar.value).toContain("wts_did=");
+  expect(storage.has("wts_did")).toBe(true);
 });
 
 test("WTS web client posts JSON body to /event with text/plain content-type", async () => {
-  cookieJar.value = "";
-  storage.clear();
-  capturedRequest = null;
-
   const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
   wts.track("test-event", { foo: "bar" });
 
-  // Allow the async send to fire
   await new Promise(r => setTimeout(r, 10));
 
-  assert.ok(capturedRequest, "fetch was called");
-  assert.equal(capturedRequest!.url, "https://t.example.com/event");
-  assert.equal(capturedRequest!.init.method, "POST");
+  expect(capturedRequest).not.toBeNull();
+  expect(capturedRequest!.url).toBe("https://t.example.com/event");
+  expect(capturedRequest!.init.method).toBe("POST");
   const headers = capturedRequest!.init.headers as Record<string, string>;
-  assert.match(headers["Content-Type"]!, /text\/plain/);
+  expect(headers["Content-Type"]).toMatch(/text\/plain/);
 
   const body = JSON.parse(capturedRequest!.init.body as string);
-  assert.equal(body.event, "test-event");
-  assert.equal(body.source, "site");
-  assert.equal(body.properties.foo, "bar");
-  assert.ok(body.distinct_id, "distinct_id is set");
-  assert.ok(body.timestamp, "timestamp is set");
+  expect(body.event).toBe("test-event");
+  expect(body.source).toBe("site");
+  expect(body.properties.foo).toBe("bar");
+  expect(body.distinct_id).toBeTruthy();
+  expect(body.timestamp).toBeTruthy();
 });
 
 test("WTS web client honors WEBINY_TELEMETRY=false in localStorage", async () => {
-  cookieJar.value = "";
-  storage.clear();
   storage.set("WEBINY_TELEMETRY", "false");
-  capturedRequest = null;
 
   const wts = new WTS({ source: "site" });
   wts.track("test-event");
 
   await new Promise(r => setTimeout(r, 10));
-  assert.equal(capturedRequest, null, "no event sent when opted out");
+  expect(capturedRequest).toBeNull();
 });
 
 test("WTS web client uses fixed distinctId when provided", async () => {
-  cookieJar.value = "";
-  storage.clear();
-  capturedRequest = null;
-
   const wts = new WTS({ source: "admin", distinctId: "machine-abc-123" });
   wts.track("admin-app-start");
 
   await new Promise(r => setTimeout(r, 10));
   const body = JSON.parse(capturedRequest!.init.body as string);
-  assert.equal(body.distinct_id, "machine-abc-123");
-  assert.equal(body.source, "admin");
+  expect(body.distinct_id).toBe("machine-abc-123");
+  expect(body.source).toBe("admin");
 });
 
 test("WTS.alias posts a $create_alias event", async () => {
-  cookieJar.value = "";
-  storage.clear();
-  capturedRequest = null;
-
   const wts = new WTS({ source: "site" });
   wts.alias("old-id", "new-id");
 
   await new Promise(r => setTimeout(r, 10));
   const body = JSON.parse(capturedRequest!.init.body as string);
-  assert.equal(body.event, "$create_alias");
-  assert.equal(body.alias, "old-id");
-  assert.equal(body.distinct_id, "new-id");
+  expect(body.event).toBe("$create_alias");
+  expect(body.alias).toBe("old-id");
+  expect(body.distinct_id).toBe("new-id");
 });
 
 test("WTS.alias rejects equal or empty ids", async () => {
-  cookieJar.value = "";
-  storage.clear();
-  capturedRequest = null;
-
   const wts = new WTS({ source: "site" });
   wts.alias("same", "same");
   wts.alias("", "x");
   wts.alias("y", "");
 
   await new Promise(r => setTimeout(r, 10));
-  assert.equal(capturedRequest, null, "no alias event sent for invalid ids");
+  expect(capturedRequest).toBeNull();
 });
 
 test("WTS.getCookieId reads the cookie jar", () => {
-  cookieJar.value = "";
-  storage.clear();
-
   const wts = new WTS({ source: "site" });
   const expected = wts["identity"].getDistinctId();
   const fromCookie = WTS.getCookieId();
-  assert.equal(fromCookie, expected);
+  expect(fromCookie).toBe(expected);
+});
+
+test("WTS web client trackPageView sends page-view event with url and referrer", async () => {
+  const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
+  wts.trackPageView({ custom: "prop" });
+
+  await new Promise(r => setTimeout(r, 10));
+
+  expect(capturedRequest).not.toBeNull();
+  const body = JSON.parse(capturedRequest!.init.body as string);
+  expect(body.event).toBe("page-view");
+  expect(body.url).toBe("https://www.webiny.com/get-started");
+  expect(body.referrer).toBe("https://www.google.com/");
+  expect(body.properties.custom).toBe("prop");
+});
+
+test("WTS web client recovers id from localStorage when cookie is missing", () => {
+  storage.set("wts_did", "stored-id-123");
+
+  const wts = new WTS({ source: "site" });
+  wts.track("test-event");
+
+  expect(cookieJar.value).toContain("stored-id-123");
+});
+
+test("WTS web client sends debug output when enabled", async () => {
+  const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+  const wts = new WTS({ source: "site", debug: true });
+  wts.track("debug-test");
+
+  await new Promise(r => setTimeout(r, 10));
+  expect(spy).toHaveBeenCalledWith(
+    "[wts]",
+    "dispatch",
+    expect.objectContaining({ event: "debug-test" })
+  );
+
+  spy.mockRestore();
+});
+
+test("WTS web client logs send failure in debug mode", async () => {
+  const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+  const originalFetch = (globalThis as any).fetch;
+  (globalThis as any).fetch = async () => {
+    throw new Error("network down");
+  };
+
+  const wts = new WTS({ source: "site", debug: true, retries: 0 });
+  wts.track("fail-test");
+
+  await new Promise(r => setTimeout(r, 50));
+  expect(spy).toHaveBeenCalledWith("[wts]", "send failed", expect.any(Error));
+
+  spy.mockRestore();
+  (globalThis as any).fetch = originalFetch;
+});
+
+test("WTS web client skips alias when opted out", async () => {
+  storage.set("WEBINY_TELEMETRY", "false");
+
+  const wts = new WTS({ source: "site" });
+  wts.alias("old", "new");
+
+  await new Promise(r => setTimeout(r, 10));
+  expect(capturedRequest).toBeNull();
+});
+
+test("WTS web client uses sendBeacon when navigator.sendBeacon is available", async () => {
+  let beaconUrl: string | null = null;
+  let beaconData: Blob | null = null;
+  defineGlobal("navigator", {
+    sendBeacon: (url: string, data: Blob) => {
+      beaconUrl = url;
+      beaconData = data;
+      return true;
+    }
+  });
+
+  const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
+  (wts as any).dispatch(
+    {
+      event: "beacon-test",
+      distinct_id: "id",
+      source: "site",
+      timestamp: new Date().toISOString()
+    },
+    { preferBeacon: true }
+  );
+
+  expect(beaconUrl).toBe("https://t.example.com/event");
+  expect(beaconData).toBeInstanceOf(Blob);
+  expect(capturedRequest).toBeNull();
+
+  defineGlobal("navigator", { sendBeacon: undefined });
+});
+
+test("WTS web client falls back to fetch when sendBeacon returns false", async () => {
+  defineGlobal("navigator", {
+    sendBeacon: () => false
+  });
+
+  const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
+  (wts as any).dispatch(
+    {
+      event: "beacon-fail",
+      distinct_id: "id",
+      source: "site",
+      timestamp: new Date().toISOString()
+    },
+    { preferBeacon: true }
+  );
+
+  await new Promise(r => setTimeout(r, 10));
+  expect(capturedRequest).not.toBeNull();
+  const body = JSON.parse(capturedRequest!.init.body as string);
+  expect(body.event).toBe("beacon-fail");
+
+  defineGlobal("navigator", { sendBeacon: undefined });
+});
+
+test("deriveApexDomain returns null for localhost", () => {
+  defineGlobal("location", {
+    hostname: "localhost",
+    href: "http://localhost:3000",
+    protocol: "http:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("domain=");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("deriveApexDomain returns null for IP address", () => {
+  defineGlobal("location", {
+    hostname: "192.168.1.1",
+    href: "http://192.168.1.1",
+    protocol: "http:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("domain=");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("deriveApexDomain returns null for single-part hostname", () => {
+  defineGlobal("location", { hostname: "intranet", href: "http://intranet", protocol: "http:" });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("domain=");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("deriveApexDomain extracts apex from multi-part hostname", () => {
+  defineGlobal("location", {
+    hostname: "app.staging.webiny.com",
+    href: "https://app.staging.webiny.com",
+    protocol: "https:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).toContain("domain=.webiny.com");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
+});
+
+test("cookie includes Secure flag on https", () => {
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).toContain("Secure");
+});
+
+test("cookie omits Secure flag on http", () => {
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "http://www.webiny.com",
+    protocol: "http:"
+  });
+
+  new WTS({ source: "site" }).track("test");
+  expect(lastSetCookie).not.toContain("Secure");
+
+  defineGlobal("location", {
+    hostname: "www.webiny.com",
+    href: "https://www.webiny.com/get-started",
+    protocol: "https:"
+  });
 });

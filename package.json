@@ -38,24 +38,32 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc && cp package.json dist/package.json",
-    "test:web": "tsx --test __tests__/web.test.ts",
-    "test:node": "tsx --test __tests__/node.test.ts",
-    "test:react": "tsx --test __tests__/react.test.tsx",
-    "test": "tsx --test __tests__/web.test.ts __tests__/node.test.ts __tests__/react.test.tsx",
+    "test:web": "vitest run __tests__/web.test.ts",
+    "test:node": "vitest run __tests__/node.test.ts",
+    "test:react": "vitest run __tests__/react.test.tsx",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "format:fix": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint --deny-warnings",
     "lint:fix": "oxlint --fix"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^24.12.4",
     "@types/react": "^18.3.29",
+    "@types/react-dom": "^18",
+    "@vitest/coverage-v8": "^4.1.7",
+    "happy-dom": "^20.9.0",
     "oxfmt": "^0.52.0",
     "oxlint": "^1.67.0",
     "posthog-js": "^1.376.4",
     "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   },
   "peerDependencies": {
     "posthog-js": ">=1.376.4",

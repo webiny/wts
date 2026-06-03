@@ -6,6 +6,7 @@ export function uuid(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
+  // Fallback for environments without crypto.randomUUID (e.g. older browsers, non-secure contexts).
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -16,6 +17,29 @@ export function uuid(): string {
 export interface Transport {
   send(url: string, body: string): Promise<void>;
   sendBeacon?(url: string, body: string): boolean;
+}
+
+export const RETRYABLE_STATUS_CODES: Set<number> = new Set([408, 429, 500, 502, 503, 504]);
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function getRetryDelay(response: Response, attempt: number, baseDelay: number): number {
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("retry-after");
+    if (retryAfter) {
+      const seconds = Number(retryAfter);
+      if (!Number.isNaN(seconds)) {
+        return seconds * 1000;
+      }
+      const date = Date.parse(retryAfter);
+      if (!Number.isNaN(date)) {
+        return Math.max(0, date - Date.now());
+      }
+    }
+  }
+  return baseDelay * 2 ** attempt;
 }
 
 export interface Identity {

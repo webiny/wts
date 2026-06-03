@@ -1,7 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { TelemetryClient, uuid, type Identity, type Transport } from "./core.js";
+import {
+  RETRYABLE_STATUS_CODES,
+  TelemetryClient,
+  getRetryDelay,
+  sleep,
+  uuid,
+  type Identity,
+  type Transport
+} from "./core.js";
 import type { ClientConfig } from "./types.js";
 
 const CONFIG_DIR = ".webiny";
@@ -11,6 +19,10 @@ const OPT_OUT_ENV = "WEBINY_TELEMETRY";
 export interface NodeClientConfig extends ClientConfig {
   /** Override the path to the Webiny config file. Defaults to ~/.webiny/config. */
   configPath?: string;
+  /** Number of retry attempts for transient HTTP errors. Defaults to 3. */
+  retries?: number;
+  /** Base delay in ms between retries (exponential backoff). Defaults to 200. */
+  retryDelay?: number;
 }
 
 class NodeIdentity implements Identity {
@@ -70,17 +82,46 @@ class NodeIdentity implements Identity {
 }
 
 class NodeTransport implements Transport {
+  private retries: number;
+  private retryDelay: number;
+
+  constructor(retries: number, retryDelay: number) {
+    this.retries = retries;
+    this.retryDelay = retryDelay;
+  }
+
   async send(url: string, body: string): Promise<void> {
-    await fetch(url, {
-      method: "POST",
-      body,
-      headers: { "Content-Type": "text/plain;charset=UTF-8" }
-    });
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          body,
+          headers: { "Content-Type": "text/plain;charset=UTF-8" }
+        });
+
+        if (response.ok || !RETRYABLE_STATUS_CODES.has(response.status)) {
+          return;
+        }
+
+        if (attempt < this.retries) {
+          await sleep(getRetryDelay(response, attempt, this.retryDelay));
+        }
+      } catch (err) {
+        if (attempt >= this.retries) {
+          throw err;
+        }
+        await sleep(this.retryDelay * 2 ** attempt);
+      }
+    }
   }
 }
 
 export class WTS extends TelemetryClient {
   constructor(config: NodeClientConfig) {
-    super(config, new NodeIdentity(config.configPath), new NodeTransport());
+    super(
+      config,
+      new NodeIdentity(config.configPath),
+      new NodeTransport(config.retries ?? 3, config.retryDelay ?? 200)
+    );
   }
 }

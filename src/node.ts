@@ -1,7 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { TelemetryClient, uuid, type Identity, type Transport } from "./core.js";
+import {
+  RETRYABLE_STATUS_CODES,
+  TelemetryClient,
+  getRetryDelay,
+  sleep,
+  uuid,
+  type Identity,
+  type Transport
+} from "./core.js";
 import type { ClientConfig } from "./types.js";
 
 const CONFIG_DIR = ".webiny";
@@ -73,29 +81,6 @@ class NodeIdentity implements Identity {
   }
 }
 
-const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function getRetryDelay(response: Response, attempt: number, baseDelay: number): number {
-  if (response.status === 429) {
-    const retryAfter = response.headers.get("retry-after");
-    if (retryAfter) {
-      const seconds = Number(retryAfter);
-      if (!Number.isNaN(seconds)) {
-        return seconds * 1000;
-      }
-      const date = Date.parse(retryAfter);
-      if (!Number.isNaN(date)) {
-        return Math.max(0, date - Date.now());
-      }
-    }
-  }
-  return baseDelay * 2 ** attempt;
-}
-
 class NodeTransport implements Transport {
   private retries: number;
   private retryDelay: number;
@@ -121,9 +106,9 @@ class NodeTransport implements Transport {
         if (attempt < this.retries) {
           await sleep(getRetryDelay(response, attempt, this.retryDelay));
         }
-      } catch {
+      } catch (err) {
         if (attempt >= this.retries) {
-          return;
+          throw err;
         }
         await sleep(this.retryDelay * 2 ** attempt);
       }

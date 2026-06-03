@@ -1,4 +1,12 @@
-import { TelemetryClient, uuid, type Identity, type Transport } from "./core.js";
+import {
+  RETRYABLE_STATUS_CODES,
+  TelemetryClient,
+  getRetryDelay,
+  sleep,
+  uuid,
+  type Identity,
+  type Transport
+} from "./core.js";
 import type { ClientConfig } from "./types.js";
 
 const COOKIE_NAME = "wts_did";
@@ -29,6 +37,10 @@ export interface WebClientConfig extends ClientConfig {
    * that do enable it must install `posthog-js` (declared as an optional peer dep).
    */
   sessionRecording?: SessionRecordingConfig;
+  /** Number of retry attempts for transient HTTP errors. Defaults to 3. */
+  retries?: number;
+  /** Base delay in ms between retries (exponential backoff). Defaults to 200. */
+  retryDelay?: number;
 }
 
 class BrowserIdentity implements Identity {
@@ -105,15 +117,40 @@ class BrowserIdentity implements Identity {
 }
 
 class BrowserTransport implements Transport {
+  private retries: number;
+  private retryDelay: number;
+
+  constructor(retries: number, retryDelay: number) {
+    this.retries = retries;
+    this.retryDelay = retryDelay;
+  }
+
   async send(url: string, body: string): Promise<void> {
-    await fetch(url, {
-      method: "POST",
-      body,
-      headers: { "Content-Type": "text/plain;charset=UTF-8" },
-      keepalive: true,
-      credentials: "omit",
-      mode: "cors"
-    });
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          body,
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          keepalive: true,
+          credentials: "omit",
+          mode: "cors"
+        });
+
+        if (response.ok || !RETRYABLE_STATUS_CODES.has(response.status)) {
+          return;
+        }
+
+        if (attempt < this.retries) {
+          await sleep(getRetryDelay(response, attempt, this.retryDelay));
+        }
+      } catch (err) {
+        if (attempt >= this.retries) {
+          throw err;
+        }
+        await sleep(this.retryDelay * 2 ** attempt);
+      }
+    }
   }
 
   sendBeacon(url: string, body: string): boolean {
@@ -136,7 +173,7 @@ export class WTS extends TelemetryClient {
     super(
       config,
       new BrowserIdentity(config.cookieDomain, config.distinctId),
-      new BrowserTransport()
+      new BrowserTransport(config.retries ?? 3, config.retryDelay ?? 200)
     );
 
     if (config.sessionRecording) {

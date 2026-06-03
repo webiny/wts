@@ -19,6 +19,29 @@ export interface Transport {
   sendBeacon?(url: string, body: string): boolean;
 }
 
+export const RETRYABLE_STATUS_CODES: Set<number> = new Set([408, 429, 500, 502, 503, 504]);
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function getRetryDelay(response: Response, attempt: number, baseDelay: number): number {
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("retry-after");
+    if (retryAfter) {
+      const seconds = Number(retryAfter);
+      if (!Number.isNaN(seconds)) {
+        return seconds * 1000;
+      }
+      const date = Date.parse(retryAfter);
+      if (!Number.isNaN(date)) {
+        return Math.max(0, date - Date.now());
+      }
+    }
+  }
+  return baseDelay * 2 ** attempt;
+}
+
 export interface Identity {
   getDistinctId(): string | null;
   isOptedOut(): boolean;

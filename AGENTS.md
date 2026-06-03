@@ -36,6 +36,8 @@ yarn format:check && yarn lint && yarn test && yarn build
 
 Do not commit if any check fails. Fix all issues first — no known errors should be left unresolved.
 
+**CRITICAL — No leaked secrets.** Before every commit, triple-check that no API keys, tokens, passwords, or secrets are present in the diff. Run `git diff --cached` and scan for anything that looks like a key. If in doubt, do not commit — ask first.
+
 ## Commands
 
 | Task            | Command             |

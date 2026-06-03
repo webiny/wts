@@ -212,7 +212,8 @@ export class WTS extends TelemetryClient {
     }
     sessionRecordingStarted = true;
 
-    import("posthog-js")
+    const mod = "posthog-js";
+    import(/* webpackIgnore: true */ /* @vite-ignore */ mod)
       .then(({ default: posthog }) => {
         posthog.init(posthogKey, {
           api_host: cfg.apiHost,

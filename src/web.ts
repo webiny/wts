@@ -33,8 +33,7 @@ export interface WebClientConfig extends ClientConfig {
   distinctId?: string;
   /**
    * Opt-in PostHog browser-side session recording. When omitted, posthog-js is not
-   * loaded — consumers that don't enable recording pay zero bundle cost. Consumers
-   * that do enable it must install `posthog-js` (declared as an optional peer dep).
+   * loaded — consumers that don't enable recording pay zero bundle cost.
    */
   sessionRecording?: SessionRecordingConfig;
   /** Number of retry attempts for transient HTTP errors. Defaults to 3. */

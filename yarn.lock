@@ -1224,11 +1224,8 @@ __metadata:
     typescript: "npm:^6.0.3"
     vitest: "npm:^4.1.7"
   peerDependencies:
-    posthog-js: ">=1.376.4"
     react: ">=18"
   peerDependenciesMeta:
-    posthog-js:
-      optional: true
     react:
       optional: true
   languageName: unknown

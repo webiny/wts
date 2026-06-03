@@ -22,8 +22,19 @@ src/
 - **Package manager**: Yarn 4 — always use `yarn`, never `npm` or `npx`.
 - **Module system**: ESM only (`"type": "module"`). All internal imports use `.js` extensions.
 - **TypeScript**: strict mode, `verbatimModuleSyntax`, `isolatedDeclarations`. All exported functions must have explicit return types.
-- **Formatting**: Prettier. Run `yarn lint:fix` before committing.
+- **Formatting**: oxfmt. Run `yarn format:fix` to auto-format.
+- **Linting**: oxlint. Run `yarn lint:fix` to auto-fix.
 - **No runtime dependencies**. React is an optional peer dependency.
+
+## Pre-commit checklist
+
+Before every commit, **all** of the following must pass with zero errors or warnings:
+
+```
+yarn format:check && yarn lint && yarn test && yarn build
+```
+
+Do not commit if any check fails. Fix all issues first — no known errors should be left unresolved.
 
 ## Commands
 
@@ -35,6 +46,8 @@ src/
 | Test web only   | `yarn test:web`     |
 | Test node only  | `yarn test:node`    |
 | Test react only | `yarn test:react`   |
+| Format check    | `yarn format:check` |
+| Format fix      | `yarn format:fix`   |
 | Lint check      | `yarn lint`         |
 | Lint fix        | `yarn lint:fix`     |
 

@@ -32,8 +32,12 @@
     "test:node": "tsx --test __tests__/node.test.ts",
     "test:react": "tsx --test __tests__/react.test.tsx",
     "test": "tsx --test __tests__/web.test.ts __tests__/node.test.ts __tests__/react.test.tsx",
-    "lint": "prettier \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
-    "lint:fix": "prettier --write \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\""
+    "prettier:run": "prettier \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
+    "prettier:run:fix": "prettier --write \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
+    "format:fix": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint --deny-warnings",
+    "lint:fix": "oxlint --fix"
   },
   "repository": {
     "type": "git",
@@ -60,11 +64,13 @@
   "devDependencies": {
     "@types/node": "^24.12.4",
     "@types/react": "^18.3.29",
-    "posthog-js": "^1.180.0",
+    "oxfmt": "^0.52.0",
+    "oxlint": "^1.67.0",
+    "posthog-js": "^1.376.4",
     "prettier": "^2.8.8",
     "react": "^18.3.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   },
-  "packageManager": "yarn@4.15.0"
+  "packageManager": "yarn@4.16.0"
 }

@@ -1,9 +1,4 @@
-import {
-  TelemetryClient,
-  uuid,
-  type Identity,
-  type Transport,
-} from "./core.js";
+import { TelemetryClient, uuid, type Identity, type Transport } from "./core.js";
 import type { ClientConfig } from "./types.js";
 
 const COOKIE_NAME = "wts_did";
@@ -46,7 +41,9 @@ class BrowserIdentity implements Identity {
   }
 
   getDistinctId(): string | null {
-    if (typeof document === "undefined") return null;
+    if (typeof document === "undefined") {
+      return null;
+    }
 
     if (this.fixedId) {
       this.persistToStorage(this.fixedId);
@@ -77,16 +74,20 @@ class BrowserIdentity implements Identity {
   }
 
   isOptedOut(): boolean {
-    if (typeof window === "undefined") return false;
-    if (readStorage(OPT_OUT_KEY) === "false") return true;
+    if (typeof window === "undefined") {
+      return false;
+    }
+    if (readStorage(OPT_OUT_KEY) === "false") {
+      return true;
+    }
     return false;
   }
 
   private writeCookie(id: string): void {
-    if (typeof document === "undefined") return;
-    const expires = new Date(
-      Date.now() + COOKIE_DAYS * 86400_000
-    ).toUTCString();
+    if (typeof document === "undefined") {
+      return;
+    }
+    const expires = new Date(Date.now() + COOKIE_DAYS * 86400_000).toUTCString();
     const domainPart = this.cookieDomain ? `; domain=${this.cookieDomain}` : "";
     const securePart = location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `${COOKIE_NAME}=${encodeURIComponent(
@@ -111,15 +112,12 @@ class BrowserTransport implements Transport {
       headers: { "Content-Type": "text/plain;charset=UTF-8" },
       keepalive: true,
       credentials: "omit",
-      mode: "cors",
+      mode: "cors"
     });
   }
 
   sendBeacon(url: string, body: string): boolean {
-    if (
-      typeof navigator === "undefined" ||
-      typeof navigator.sendBeacon !== "function"
-    ) {
+    if (typeof navigator === "undefined" || typeof navigator.sendBeacon !== "function") {
       return false;
     }
     try {
@@ -147,8 +145,12 @@ export class WTS extends TelemetryClient {
   }
 
   private startSessionRecording(cfg: SessionRecordingConfig): void {
-    if (typeof window === "undefined") return;
-    if (sessionRecordingStarted) return;
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (sessionRecordingStarted) {
+      return;
+    }
     if (this.identity.isOptedOut()) {
       this.debug("opted out, skipping session recording");
       return;
@@ -174,21 +176,23 @@ export class WTS extends TelemetryClient {
           bootstrap: { distinctID: distinctId },
           session_recording: {
             maskAllInputs: true,
-            maskTextSelector: cfg.maskTextSelector ?? "[data-private]",
-          },
+            maskTextSelector: cfg.maskTextSelector ?? "[data-private]"
+          }
         });
         this.debug("session recording started", distinctId);
       })
-      .catch((err) => {
+      .catch(err => {
         this.debug("session recording failed to load", err);
       });
   }
 
   trackPageView(properties: Record<string, unknown> = {}): void {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
     this.track("page-view", properties, {
       url: window.location.href,
-      referrer: document.referrer || undefined,
+      referrer: document.referrer || undefined
     });
   }
 
@@ -199,16 +203,18 @@ export class WTS extends TelemetryClient {
 }
 
 function readCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(
-    new RegExp("(?:^|; )" + name + "=([^;]*)")
-  );
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
   return match && match[1] ? decodeURIComponent(match[1]) : null;
 }
 
 function readStorage(key: string): string | null {
   try {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
     return window.localStorage.getItem(key);
   } catch {
     return null;
@@ -216,11 +222,19 @@ function readStorage(key: string): string | null {
 }
 
 function deriveApexDomain(): string | null {
-  if (typeof location === "undefined") return null;
+  if (typeof location === "undefined") {
+    return null;
+  }
   const host = location.hostname;
-  if (!host || host === "localhost") return null;
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return null;
+  if (!host || host === "localhost") {
+    return null;
+  }
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    return null;
+  }
   const parts = host.split(".");
-  if (parts.length < 2) return null;
+  if (parts.length < 2) {
+    return null;
+  }
   return "." + parts.slice(-2).join(".");
 }

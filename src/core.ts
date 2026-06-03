@@ -1,20 +1,12 @@
-import type {
-  AnyEvent,
-  ClientConfig,
-  EventProperties,
-  EventSource,
-} from "./types.js";
+import type { AnyEvent, ClientConfig, EventProperties, EventSource } from "./types.js";
 
 export const DEFAULT_API_URL = "https://t.webiny.com";
 
 export function uuid(): string {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
@@ -72,7 +64,7 @@ export class TelemetryClient {
       properties,
       timestamp: new Date().toISOString(),
       ...(context.url ? { url: context.url } : {}),
-      ...(context.referrer ? { referrer: context.referrer } : {}),
+      ...(context.referrer ? { referrer: context.referrer } : {})
     };
 
     this.dispatch(payload);
@@ -93,7 +85,7 @@ export class TelemetryClient {
       distinct_id: newId,
       alias: oldId,
       source: this.source,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
 
     this.dispatch(payload);
@@ -106,10 +98,12 @@ export class TelemetryClient {
     this.debug("dispatch", payload);
 
     if (options.preferBeacon && this.transport.sendBeacon) {
-      if (this.transport.sendBeacon(url, body)) return;
+      if (this.transport.sendBeacon(url, body)) {
+        return;
+      }
     }
 
-    this.transport.send(url, body).catch((err) => {
+    this.transport.send(url, body).catch(err => {
       this.debug("send failed", err);
     });
   }

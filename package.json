@@ -1,11 +1,24 @@
 {
   "name": "@webiny/wts-client",
-  "type": "module",
   "version": "3.0.0",
   "description": "Webiny Telemetry Service (WTS) client library.",
-  "publishConfig": {
-    "access": "public"
+  "homepage": "https://github.com/webiny/wts#readme",
+  "bugs": {
+    "url": "https://github.com/webiny/wts/issues"
   },
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webiny/wts.git"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.js.map",
+    "**/*.d.ts.map"
+  ],
+  "type": "module",
   "exports": {
     "./web": {
       "types": "./web.d.ts",
@@ -20,33 +33,32 @@
       "import": "./react.js"
     }
   },
-  "files": [
-    "**/*.js",
-    "**/*.d.ts",
-    "**/*.js.map",
-    "**/*.d.ts.map"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rm -rf dist && tsc && cp package.json dist/package.json",
     "test:web": "tsx --test __tests__/web.test.ts",
     "test:node": "tsx --test __tests__/node.test.ts",
     "test:react": "tsx --test __tests__/react.test.tsx",
     "test": "tsx --test __tests__/web.test.ts __tests__/node.test.ts __tests__/react.test.tsx",
-    "lint": "prettier \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\"",
-    "lint:fix": "prettier --write \"src/**/*.{ts,tsx}\" \"__tests__/**/*.{ts,tsx}\""
+    "format:fix": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint --deny-warnings",
+    "lint:fix": "oxlint --fix"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/webiny/wts.git"
+  "devDependencies": {
+    "@types/node": "^24.12.4",
+    "@types/react": "^18.3.29",
+    "oxfmt": "^0.52.0",
+    "oxlint": "^1.67.0",
+    "posthog-js": "^1.376.4",
+    "react": "^18.3.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
   },
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/webiny/wts/issues"
-  },
-  "homepage": "https://github.com/webiny/wts#readme",
   "peerDependencies": {
-    "posthog-js": ">=1.180.0",
+    "posthog-js": ">=1.376.4",
     "react": ">=18"
   },
   "peerDependenciesMeta": {
@@ -57,14 +69,5 @@
       "optional": true
     }
   },
-  "devDependencies": {
-    "@types/node": "^24.12.4",
-    "@types/react": "^18.3.29",
-    "posthog-js": "^1.180.0",
-    "prettier": "^2.8.8",
-    "react": "^18.3.1",
-    "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
-  },
-  "packageManager": "yarn@4.15.0"
+  "packageManager": "yarn@4.16.0"
 }

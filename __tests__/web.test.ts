@@ -173,6 +173,50 @@ test("WTS web client omits $session_id when posthog-js has not loaded yet", asyn
   expect(body.properties.custom).toBe("prop");
 });
 
+test("WTS web client warns and skips recording when sessionRecording lacks loadPostHog", async () => {
+  const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+  // No loadPostHog provided — must warn and skip without throwing. This path
+  // returns before the module-level "started" guard is set.
+  new WTS({
+    source: "site",
+    sessionRecording: { posthogKey: "phc_test", apiHost: "https://s.example.com" }
+  });
+
+  await new Promise(r => setTimeout(r, 10));
+  expect(spy).toHaveBeenCalledWith(expect.stringContaining("no loadPostHog"));
+  spy.mockRestore();
+});
+
+test("WTS web client loads posthog via loadPostHog and initializes recording", async () => {
+  const init = vi.fn();
+  const fakePosthog = { init, get_session_id: () => "sess-from-sdk" };
+  let loaderCalled = false;
+
+  new WTS({
+    source: "site",
+    sessionRecording: {
+      posthogKey: "phc_test",
+      apiHost: "https://s.example.com",
+      loadPostHog: async () => {
+        loaderCalled = true;
+        return { default: fakePosthog };
+      }
+    }
+  });
+
+  await new Promise(r => setTimeout(r, 10));
+  expect(loaderCalled).toBe(true);
+  expect(init).toHaveBeenCalledWith(
+    "phc_test",
+    expect.objectContaining({
+      api_host: "https://s.example.com",
+      capture_pageview: false,
+      disable_session_recording: false
+    })
+  );
+});
+
 test("WTS web client recovers id from localStorage when cookie is missing", () => {
   storage.set("wts_did", "stored-id-123");
 

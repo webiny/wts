@@ -148,6 +148,31 @@ test("WTS web client trackPageView sends page-view event with url and referrer",
   expect(body.properties.custom).toBe("prop");
 });
 
+test("WTS web client stamps $session_id onto events once posthog-js is loaded", async () => {
+  const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
+  // Simulate posthog-js having finished loading and a recording session being active.
+  (wts as any).posthog = { get_session_id: () => "sess-abc-123" };
+
+  wts.trackPageView({ custom: "prop" });
+
+  await new Promise(r => setTimeout(r, 10));
+
+  const body = JSON.parse(capturedRequest!.init.body as string);
+  expect(body.properties.$session_id).toBe("sess-abc-123");
+  expect(body.properties.custom).toBe("prop");
+});
+
+test("WTS web client omits $session_id when posthog-js has not loaded yet", async () => {
+  const wts = new WTS({ source: "site", apiUrl: "https://t.example.com" });
+  wts.trackPageView({ custom: "prop" });
+
+  await new Promise(r => setTimeout(r, 10));
+
+  const body = JSON.parse(capturedRequest!.init.body as string);
+  expect(body.properties.$session_id).toBeUndefined();
+  expect(body.properties.custom).toBe("prop");
+});
+
 test("WTS web client recovers id from localStorage when cookie is missing", () => {
   storage.set("wts_did", "stored-id-123");
 

@@ -7,7 +7,17 @@ import {
   type Identity,
   type Transport
 } from "./core.js";
-import type { ClientConfig } from "./types.js";
+import type { ClientConfig, EventProperties } from "./types.js";
+
+/**
+ * Minimal surface of the posthog-js default export that we rely on. We avoid a
+ * type dependency on posthog-js (it's an optional peer dep) and only describe
+ * the two methods we call.
+ */
+interface PostHogLike {
+  init: (key: string, options: Record<string, unknown>) => void;
+  get_session_id?: () => string | undefined;
+}
 
 const COOKIE_NAME = "wts_did";
 const STORAGE_KEY = "wts_did";
@@ -173,6 +183,13 @@ class BrowserTransport implements Transport {
 let sessionRecordingStarted = false;
 
 export class WTS extends TelemetryClient {
+  /**
+   * Set once posthog-js finishes loading (only when session recording is
+   * enabled). Used to stamp the active replay `$session_id` onto outgoing
+   * events so PostHog can link them to recordings. Stays null otherwise.
+   */
+  private posthog: PostHogLike | null = null;
+
   constructor(config: WebClientConfig) {
     super(
       config,
@@ -183,6 +200,23 @@ export class WTS extends TelemetryClient {
     if (config.sessionRecording) {
       this.startSessionRecording(config.sessionRecording);
     }
+  }
+
+  /**
+   * Stamps the active session-recording `$session_id` onto every event so
+   * PostHog can use the event to filter recordings. The id is read at call
+   * time because it rotates over the lifetime of a session. Events fired
+   * before posthog-js finishes loading (e.g. the first pageview of a cold
+   * load) go out without it — they're still captured, just not linked.
+   */
+  override track(
+    event: string,
+    properties: EventProperties = {},
+    context: { url?: string; referrer?: string } = {}
+  ): void {
+    const sessionId = this.posthog?.get_session_id?.();
+    const merged = sessionId ? { ...properties, $session_id: sessionId } : properties;
+    super.track(event, merged, context);
   }
 
   private startSessionRecording(cfg: SessionRecordingConfig): void {
@@ -215,6 +249,7 @@ export class WTS extends TelemetryClient {
     const mod = "posthog-js";
     import(/* webpackIgnore: true */ /* @vite-ignore */ mod)
       .then(({ default: posthog }) => {
+        this.posthog = posthog as PostHogLike;
         posthog.init(posthogKey, {
           api_host: cfg.apiHost,
           // WTS owns event capture via wts-server. The PostHog browser SDK is

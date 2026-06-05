@@ -19,6 +19,13 @@ interface PostHogLike {
   get_session_id?: () => string | undefined;
 }
 
+/**
+ * What `loadPostHog` may resolve to: either the posthog-js module namespace
+ * (`{ default: posthog }`, as returned by `import("posthog-js")`) or the
+ * posthog instance directly.
+ */
+type PostHogModule = { default: PostHogLike } | PostHogLike;
+
 const COOKIE_NAME = "wts_did";
 const STORAGE_KEY = "wts_did";
 const OPT_OUT_KEY = "WEBINY_TELEMETRY";
@@ -35,6 +42,15 @@ export interface SessionRecordingConfig {
   apiHost: string;
   /** CSS selector for text that should be masked in recordings. Defaults to `[data-private]`. */
   maskTextSelector?: string;
+  /**
+   * Loads the posthog-js module. WTS never imports posthog-js itself — that way
+   * consumers which don't record (e.g. the Webiny admin app) don't trigger a
+   * build-time resolution of an uninstalled optional dependency. Recording
+   * consumers pass `() => import("posthog-js")` so the import resolves inside
+   * *their* bundle, where posthog-js is installed. Required to enable recording;
+   * if omitted, recording is skipped with a console warning.
+   */
+  loadPostHog?: () => Promise<PostHogModule>;
 }
 
 export interface WebClientConfig extends ClientConfig {
@@ -48,7 +64,8 @@ export interface WebClientConfig extends ClientConfig {
   /**
    * Opt-in PostHog browser-side session recording. When omitted, posthog-js is not
    * loaded — consumers that don't enable recording pay zero bundle cost. Consumers
-   * that do enable it must install `posthog-js` (declared as an optional peer dep).
+   * that do enable it must install `posthog-js` and pass `loadPostHog` (see
+   * {@link SessionRecordingConfig.loadPostHog}); WTS never imports it directly.
    */
   sessionRecording?: SessionRecordingConfig;
   /** Number of retry attempts for transient HTTP errors. Defaults to 3. */
@@ -239,6 +256,14 @@ export class WTS extends TelemetryClient {
       );
       return;
     }
+    if (!cfg.loadPostHog) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[wts] session recording is configured but no loadPostHog loader was provided — skipping. " +
+          "Provide loadPostHog (a loader that dynamically imports the posthog-js module) so the SDK resolves inside your bundle."
+      );
+      return;
+    }
     const distinctId = this.identity.getDistinctId();
     if (!distinctId) {
       this.debug("no distinct_id available, skipping session recording");
@@ -246,10 +271,11 @@ export class WTS extends TelemetryClient {
     }
     sessionRecordingStarted = true;
 
-    const mod = "posthog-js";
-    import(/* webpackIgnore: true */ /* @vite-ignore */ mod)
-      .then(({ default: posthog }) => {
-        this.posthog = posthog as PostHogLike;
+    cfg
+      .loadPostHog()
+      .then(mod => {
+        const posthog = ("default" in mod ? mod.default : mod) as PostHogLike;
+        this.posthog = posthog;
         posthog.init(posthogKey, {
           api_host: cfg.apiHost,
           // WTS owns event capture via wts-server. The PostHog browser SDK is

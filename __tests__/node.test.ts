@@ -69,6 +69,46 @@ test("WTS node client reuses existing user.id from config", async () => {
   expect(body.distinct_id).toBe(existingId);
 });
 
+test("WTS node client uses a provided distinctId as-is", async () => {
+  const wts = new WTS({
+    source: "cli",
+    configPath,
+    distinctId: "global-config-id-abc",
+    apiUrl: "https://t.example.com"
+  });
+  wts.track("cli-create-webiny-project-start");
+
+  await new Promise(r => setTimeout(r, 10));
+  const body = JSON.parse(capturedRequests[0]!.init.body as string);
+  expect(body.distinct_id).toBe("global-config-id-abc");
+});
+
+test("WTS node client leaves the config file untouched when distinctId is provided", async () => {
+  const wts = new WTS({ source: "cli", configPath, distinctId: "global-config-id-abc" });
+  wts.track("cli-create-webiny-project-start");
+
+  await new Promise(r => setTimeout(r, 10));
+  // No machine id should be minted into ~/.webiny/config when an id is injected.
+  expect(existsSync(configPath)).toBe(false);
+});
+
+test("WTS node client prefers distinctId over an existing user.id in config", async () => {
+  mkdirSync(join(tmpDir, ".webiny"), { recursive: true });
+  writeFileSync(configPath, JSON.stringify({ user: { id: "existing-user-id" } }));
+
+  const wts = new WTS({
+    source: "cli",
+    configPath,
+    distinctId: "global-config-id-abc",
+    apiUrl: "https://t.example.com"
+  });
+  wts.track("cli-create-webiny-project-start");
+
+  await new Promise(r => setTimeout(r, 10));
+  const body = JSON.parse(capturedRequests[0]!.init.body as string);
+  expect(body.distinct_id).toBe("global-config-id-abc");
+});
+
 test("WTS node client honors WEBINY_TELEMETRY=false env var", async () => {
   process.env.WEBINY_TELEMETRY = "false";
 

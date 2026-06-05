@@ -19,6 +19,14 @@ const OPT_OUT_ENV = "WEBINY_TELEMETRY";
 export interface NodeClientConfig extends ClientConfig {
   /** Override the path to the Webiny config file. Defaults to ~/.webiny/config. */
   configPath?: string;
+  /**
+   * Force a specific distinct_id instead of reading/minting the machine id in
+   * the Webiny config file. When provided, it's used as-is and the config file
+   * is left untouched. Webiny passes the canonical `@webiny/global-config` id
+   * here so CLI, admin, and website events share one identity; without it the
+   * client falls back to its own `user.id` field, which is a different UUID.
+   */
+  distinctId?: string;
   /** Number of retry attempts for transient HTTP errors. Defaults to 3. */
   retries?: number;
   /** Base delay in ms between retries (exponential backoff). Defaults to 200. */
@@ -28,12 +36,17 @@ export interface NodeClientConfig extends ClientConfig {
 class NodeIdentity implements Identity {
   private path: string;
   private cached: string | null = null;
+  private fixedId: string | null;
 
-  constructor(configPath?: string) {
+  constructor(configPath?: string, fixedId?: string) {
     this.path = configPath ?? join(homedir(), CONFIG_DIR, CONFIG_FILE);
+    this.fixedId = fixedId ?? null;
   }
 
   getDistinctId(): string | null {
+    if (this.fixedId) {
+      return this.fixedId;
+    }
     if (this.cached) {
       return this.cached;
     }
@@ -120,7 +133,7 @@ export class WTS extends TelemetryClient {
   constructor(config: NodeClientConfig) {
     super(
       config,
-      new NodeIdentity(config.configPath),
+      new NodeIdentity(config.configPath, config.distinctId),
       new NodeTransport(config.retries ?? 3, config.retryDelay ?? 200)
     );
   }
